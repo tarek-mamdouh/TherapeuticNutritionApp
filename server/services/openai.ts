@@ -1,4 +1,5 @@
 import OpenAI from "openai";
+import { storage } from '../storage';
 
 // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
 const MODEL = "gpt-4o";
@@ -52,8 +53,8 @@ export async function chatWithOpenAI(query: string, language: string = 'ar'): Pr
     
     // Try to get a response from our QA database as fallback
     try {
-      // Connect to our local QA database
-      const qaEntries = await getQAResponseFromDatabase(query, language);
+      // Use our searchQADatabase function
+      const qaEntries = await searchQADatabase(query, language);
       if (qaEntries && qaEntries.length > 0) {
         return qaEntries[0].answer;
       }

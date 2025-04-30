@@ -8,17 +8,20 @@ import MealAnalysis from "@/pages/MealAnalysis";
 import ChatbotPage from "@/pages/ChatbotPage";
 import MealLog from "@/pages/MealLog";
 import Profile from "@/pages/Profile";
-import Layout from "@/components/Layout";
+import AuthPage from "@/pages/auth-page";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { useLanguage } from "@/hooks/useLanguage";
 import { useEffect } from "react";
+import { UserProvider } from "@/contexts/UserContext";
 
 function Router() {
   return (
     <Switch>
-      <Route path="/" component={MealAnalysis} />
-      <Route path="/chatbot" component={ChatbotPage} />
-      <Route path="/meal-log" component={MealLog} />
-      <Route path="/profile" component={Profile} />
+      <ProtectedRoute path="/" component={MealAnalysis} />
+      <ProtectedRoute path="/chatbot" component={ChatbotPage} />
+      <ProtectedRoute path="/meal-log" component={MealLog} />
+      <ProtectedRoute path="/profile" component={Profile} />
+      <Route path="/auth" component={AuthPage} />
       <Route component={NotFound} />
     </Switch>
   );
@@ -38,10 +41,10 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <Layout>
+        <UserProvider>
           <Router />
-        </Layout>
-        <Toaster />
+          <Toaster />
+        </UserProvider>
       </TooltipProvider>
     </QueryClientProvider>
   );

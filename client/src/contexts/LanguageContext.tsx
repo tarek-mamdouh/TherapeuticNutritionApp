@@ -1,10 +1,12 @@
 import React, { createContext, useState, useEffect } from 'react';
+import { t as translationFn } from '@/lib/i18n';
 
 type LanguageContextType = {
   language: string;
   direction: 'rtl' | 'ltr';
   toggleLanguage: () => void;
   setLanguage: (lang: string) => void;
+  t: (key: string, variables?: Record<string, any>) => string;
 };
 
 const defaultLanguageContext: LanguageContextType = {
@@ -12,6 +14,7 @@ const defaultLanguageContext: LanguageContextType = {
   direction: 'rtl',
   toggleLanguage: () => {},
   setLanguage: () => {},
+  t: (key: string) => key,
 };
 
 export const LanguageContext = createContext<LanguageContextType>(defaultLanguageContext);
@@ -42,8 +45,13 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({ children }) 
     setLanguageState(lang);
   };
   
+  // Create a translation function that wraps the imported one
+  const t = (key: string, variables?: Record<string, any>): string => {
+    return translationFn(key, variables);
+  };
+  
   return (
-    <LanguageContext.Provider value={{ language, direction, toggleLanguage, setLanguage }}>
+    <LanguageContext.Provider value={{ language, direction, toggleLanguage, setLanguage, t }}>
       {children}
     </LanguageContext.Provider>
   );

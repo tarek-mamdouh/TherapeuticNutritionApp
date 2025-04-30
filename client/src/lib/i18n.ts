@@ -1,55 +1,59 @@
-import { useLanguage } from '@/hooks/useLanguage';
-import arTranslations from './translations/ar';
-import enTranslations from './translations/en';
+import { useContext } from 'react';
+import { LanguageContext } from '@/contexts/LanguageContext';
+import arTranslations from './translations/ar.json';
+import enTranslations from './translations/en.json';
 
-// Type for the translation object
 type TranslationObject = {
   [key: string]: string | TranslationObject;
 };
 
-// Get a nested value from an object using a dot-separated path
+const translations: Record<string, TranslationObject> = {
+  ar: arTranslations,
+  en: enTranslations,
+};
+
 function getNestedValue(obj: TranslationObject, path: string): string {
   const keys = path.split('.');
-  let result: TranslationObject | string = obj;
-  
+  let result: any = obj;
+
   for (const key of keys) {
-    if (typeof result === 'string' || result === undefined) {
-      return path; // Return the path if we can't find the translation
+    if (result && typeof result === 'object' && key in result) {
+      result = result[key];
+    } else {
+      return path; // Return the path if key doesn't exist
     }
-    
-    result = result[key];
   }
-  
+
   return typeof result === 'string' ? result : path;
 }
 
-// Replace template variables in a string
 function replaceVariables(str: string, variables?: Record<string, any>): string {
   if (!variables) return str;
   
-  return str.replace(/\{([^}]+)\}/g, (_, key) => {
-    return variables[key] !== undefined ? String(variables[key]) : `{${key}}`;
+  return str.replace(/\{\{([^}]+)\}\}/g, (_, key) => {
+    const value = variables[key];
+    return value !== undefined ? String(value) : `{{${key}}}`;
   });
 }
 
-// Get translation based on current language
 export function t(key: string, variables?: Record<string, any>): string {
-  const language = typeof window !== 'undefined' ? localStorage.getItem('language') || 'ar' : 'ar';
-  const translations = language === 'ar' ? arTranslations : enTranslations;
+  // Get the current language from localStorage
+  const language = localStorage.getItem('language') || 'ar';
+  const translationObj = translations[language] || translations.ar;
   
-  const translatedString = getNestedValue(translations, key);
-  return replaceVariables(translatedString, variables);
+  // Get the translated string
+  const translatedStr = getNestedValue(translationObj, key);
+  
+  // Replace variables if any
+  return replaceVariables(translatedStr, variables);
 }
 
-// Custom hook for using translations with the current language
 export function useTranslation() {
-  const { language } = useLanguage();
+  const context = useContext(LanguageContext);
   
-  const translate = (key: string, variables?: Record<string, any>): string => {
-    const translations = language === 'ar' ? arTranslations : enTranslations;
-    const translatedString = getNestedValue(translations, key);
-    return replaceVariables(translatedString, variables);
-  };
+  if (context === undefined) {
+    throw new Error('useTranslation must be used within a LanguageProvider');
+  }
   
-  return { t: translate };
+  return { t, language: context.language };
 }

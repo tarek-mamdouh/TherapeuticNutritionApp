@@ -18,7 +18,7 @@ function Router() {
   return (
     <Switch>
       <ProtectedRoute path="/" component={MealAnalysis} />
-      <ProtectedRoute path="/chatbot" component={ChatbotPage} />
+      <Route path="/chatbot" component={ChatbotPage} />
       <ProtectedRoute path="/meal-log" component={MealLog} />
       <ProtectedRoute path="/profile" component={Profile} />
       <Route path="/auth" component={AuthPage} />

@@ -11,6 +11,17 @@
   "profile": "Profile",
   "accessibility": "Accessibility",
   
+  "tabs": {
+    "mealAnalysis": "Food Analysis",
+    "chatbot": "Smart Assistant",
+    "mealLog": "Meal Log",
+    "profile": "Profile"
+  },
+  
+  "navigation": {
+    "mainNav": "Main Navigation"
+  },
+  
   "analyzeImage": "Analyze Image",
   "manualEntry": "Manual Entry",
   "recognizedFoods": "Recognized Foods",
@@ -87,7 +98,17 @@
     "suggestion": "You can ask me about any food or dietary advice for diabetics",
     "error": "Error",
     "errorDesc": "We couldn't process your request",
-    "errorMessage": "Sorry, there was an error processing your request. Please try again later."
+    "errorMessage": "Sorry, there was an error processing your request. Please try again later.",
+    "pageTitle": "Smart Assistant",
+    "pageDescription": "Use the smart assistant to get answers to your questions about nutrition for diabetics",
+    "nutritionQuestionsTitle": "Questions you can ask",
+    "question1": "What foods are suitable for diabetics?",
+    "question2": "How can I lower my blood sugar after meals?",
+    "question3": "What are the glycemic indices of common foods?",
+    "mealSuggestionsTitle": "Meal Suggestions",
+    "suggestion1": "Suggest a healthy breakfast for a diabetic",
+    "suggestion2": "What are healthy alternatives to white rice?",
+    "suggestion3": "How can I prepare a low-carb dinner?"
   },
   
   "speech": {

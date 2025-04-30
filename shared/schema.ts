@@ -5,6 +5,7 @@ import { z } from "zod";
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").notNull().unique(),
+  email: text("email").notNull().unique(),
   password: text("password").notNull(),
   name: text("name"),
   age: integer("age"),
@@ -58,6 +59,25 @@ export const insertUserSchema = createInsertSchema(users).omit({
   createdAt: true
 });
 
+// Extended schemas with validation
+export const userSignupSchema = insertUserSchema.extend({
+  email: z.string().email({ message: "Invalid email address" }),
+  password: z.string().min(8, { message: "Password must be at least 8 characters" }),
+  confirmPassword: z.string(),
+  diabetesType: z.enum(["type1", "type2", "gestational", "prediabetes", "other"], {
+    invalid_type_error: "Invalid diabetes type",
+    required_error: "Diabetes type is required"
+  }),
+}).refine(data => data.password === data.confirmPassword, {
+  message: "Passwords don't match",
+  path: ["confirmPassword"]
+});
+
+export const userLoginSchema = z.object({
+  email: z.string().email({ message: "Invalid email address" }),
+  password: z.string().min(1, { message: "Password is required" }),
+});
+
 export const insertFoodSchema = createInsertSchema(foods).omit({
   id: true
 });
@@ -79,6 +99,14 @@ export const insertQASchema = createInsertSchema(qaDatabase).omit({
 // Types
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
+export type UserSignup = z.infer<typeof userSignupSchema>;
+export type UserLogin = z.infer<typeof userLoginSchema>;
+
+// Auth response types
+export type AuthResponse = {
+  user: Omit<User, 'password'>;
+  token: string;
+};
 
 export type InsertFood = z.infer<typeof insertFoodSchema>;
 export type Food = typeof foods.$inferSelect;

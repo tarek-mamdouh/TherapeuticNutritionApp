@@ -50,12 +50,77 @@ export async function chatWithOpenAI(query: string, language: string = 'ar'): Pr
   } catch (error) {
     console.error("Error calling OpenAI:", error);
     
-    // Return a friendly error message in the appropriate language
-    if (language === 'ar') {
-      return "عذراً، حدث خطأ أثناء معالجة سؤالك. يرجى المحاولة مرة أخرى لاحقاً.";
-    } else {
-      return "Sorry, an error occurred while processing your question. Please try again later.";
+    // Try to get a response from our QA database as fallback
+    try {
+      // Connect to our local QA database
+      const qaEntries = await getQAResponseFromDatabase(query, language);
+      if (qaEntries && qaEntries.length > 0) {
+        return qaEntries[0].answer;
+      }
+    } catch (dbError) {
+      console.error("Error accessing QA database:", dbError);
     }
+    
+    // Return predetermined responses for common diabetes nutrition questions
+    if (query.toLowerCase().includes("banana") || query.toLowerCase().includes("موز")) {
+      if (language === 'ar') {
+        return "الموز يحتوي على نسبة متوسطة من السكر. يمكن لمرضى السكري تناوله باعتدال (نصف موزة متوسطة) كجزء من نظام غذائي متوازن. المؤشر الجلايسيمي للموز الناضج هو 51، وهو معتدل. تأكد من مراقبة مستويات السكر في الدم بانتظام.";
+      } else {
+        return "Bananas contain a moderate amount of sugar. Diabetics can consume them in moderation (half a medium banana) as part of a balanced diet. The glycemic index of a ripe banana is 51, which is moderate. Make sure to monitor your blood sugar levels regularly.";
+      }
+    }
+    
+    if (query.toLowerCase().includes("rice") || query.toLowerCase().includes("أرز")) {
+      if (language === 'ar') {
+        return "الأرز الأبيض له مؤشر جلايسيمي مرتفع، مما قد يؤدي إلى ارتفاع سريع في نسبة السكر بالدم. يُفضل استبداله بالأرز البني أو البسمتي، واستهلاكه بكميات معتدلة. حصة مناسبة هي حوالي ثلث كوب من الأرز المطبوخ للوجبة.";
+      } else {
+        return "White rice has a high glycemic index, which can lead to rapid blood sugar spikes. It's preferable to substitute with brown or basmati rice, and consume it in moderate portions. An appropriate serving is about 1/3 cup of cooked rice per meal.";
+      }
+    }
+    
+    if (query.toLowerCase().includes("sugar") || query.toLowerCase().includes("سكر")) {
+      if (language === 'ar') {
+        return "يجب على مرضى السكري تقليل استهلاك السكر المضاف قدر الإمكان. يمكن استخدام بدائل السكر مثل الستيفيا أو الإريثريتول باعتدال. تأكد من قراءة الملصقات الغذائية للكشف عن السكريات المخفية في الأطعمة المصنعة.";
+      } else {
+        return "Diabetics should minimize added sugar consumption as much as possible. Sugar alternatives like stevia or erythritol can be used in moderation. Make sure to read nutrition labels to detect hidden sugars in processed foods.";
+      }
+    }
+    
+    // Return a friendly error message if no matching response found
+    if (language === 'ar') {
+      return "عذراً، لا يمكنني الإجابة على هذا السؤال حاليًا. يمكنك تجربة أسئلة أخرى حول التغذية لمرضى السكري مثل 'هل يمكنني تناول الموز؟' أو 'ما هي البدائل الصحية للأرز الأبيض؟'";
+    } else {
+      return "Sorry, I can't answer this question at the moment. You can try other questions about diabetic nutrition like 'Can I eat bananas?' or 'What are healthy alternatives to white rice?'";
+    }
+  }
+}
+
+// Function to get responses from QA database
+async function getQAResponseFromDatabase(query: string, language: string): Promise<any[]> {
+  // Import storage here to avoid circular dependency
+  const { storage } = require('../storage');
+  
+  try {
+    // Get all QA entries that match the language
+    const qaEntries = await storage.getQAByLanguage(language);
+    
+    // Simple matching algorithm - check if the question contains keywords from the query
+    // In a real app, this would use more sophisticated NLP techniques
+    const matches = qaEntries.filter(qa => {
+      const normalizedQuery = query.toLowerCase();
+      const normalizedQuestion = qa.question.toLowerCase();
+      
+      // Check if query terms appear in the question
+      const queryTerms = normalizedQuery.split(/\s+/);
+      return queryTerms.some(term => 
+        term.length > 3 && normalizedQuestion.includes(term)
+      );
+    });
+    
+    return matches;
+  } catch (error) {
+    console.error("Error querying QA database:", error);
+    return [];
   }
 }
 

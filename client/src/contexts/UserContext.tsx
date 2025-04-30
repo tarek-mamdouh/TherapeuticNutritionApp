@@ -24,7 +24,25 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     const fetchUser = async () => {
       try {
+        // Check if we have a token
+        const token = localStorage.getItem('authToken');
+        
+        if (!token) {
+          // No token, so no user is logged in
+          setIsLoading(false);
+          return;
+        }
+        
+        // Set the token in headers through apiRequest
         const response = await apiRequest('GET', '/api/user/profile', undefined);
+        
+        if (!response.ok) {
+          // Token might be invalid or expired
+          localStorage.removeItem('authToken');
+          setIsLoading(false);
+          return;
+        }
+        
         const userData = await response.json();
         setUser(userData);
       } catch (err) {
@@ -44,12 +62,29 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     
     try {
       const response = await apiRequest('POST', '/api/auth/login', { username, password });
-      const userData = await response.json();
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Login failed');
+      }
+      
+      const data = await response.json();
+      
+      // Check if we have user data in the response
+      const userData = data.user || data;
+      
+      // Set user data and store token if present
       setUser(userData);
+      
+      if (data.token) {
+        localStorage.setItem('authToken', data.token);
+      }
+      
       toast({
         title: t('user.loginSuccess'),
         description: t('user.loginSuccessDesc', { name: userData.name || username }),
       });
+      
       return true;
     } catch (err) {
       console.error('Login failed:', err);
@@ -70,12 +105,23 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     
     try {
       await apiRequest('POST', '/api/auth/logout', undefined);
+      
+      // Clear user data
       setUser(null);
+      
+      // Remove token from local storage
+      localStorage.removeItem('authToken');
+      
       toast({
         title: t('user.logoutSuccess'),
       });
     } catch (err) {
       console.error('Logout failed:', err);
+      
+      // Still remove user data and token on error
+      setUser(null);
+      localStorage.removeItem('authToken');
+      
       toast({
         title: t('user.logoutError'),
         variant: 'destructive',

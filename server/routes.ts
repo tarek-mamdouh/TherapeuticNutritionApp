@@ -1,12 +1,43 @@
-import type { Express } from "express";
+import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { chatWithOpenAI } from "./services/openai";
 import { recognizeFood } from "./services/foodRecognition";
 import { getFoodNutrition, analyzeFoodSuitability } from "./services/nutritionDatabase";
 import multer from "multer";
-import { FoodAnalysisResponse, insertChatMessageSchema } from "@shared/schema";
+import { FoodAnalysisResponse, insertChatMessageSchema, userSignupSchema, userLoginSchema, AuthResponse } from "@shared/schema";
 import { z } from "zod";
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
+
+// JWT Secret
+const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key";
+
+// Auth middleware
+interface AuthenticatedRequest extends Request {
+  user?: {
+    id: number;
+    username: string;
+  };
+}
+
+const authenticate = (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+  const authHeader = req.headers.authorization;
+  
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ message: "Unauthorized: No token provided" });
+  }
+  
+  const token = authHeader.split(' ')[1];
+  
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET) as { id: number, username: string };
+    req.user = decoded;
+    next();
+  } catch (error) {
+    return res.status(401).json({ message: "Unauthorized: Invalid token" });
+  }
+};
 
 // Configure multer for handling file uploads
 const upload = multer({ 
@@ -24,69 +55,141 @@ export async function registerRoutes(app: Express): Promise<Server> {
   await initializeSampleData();
 
   // ===== Authentication Routes =====
-  app.post("/api/auth/login", async (req, res) => {
+  // User registration route
+  app.post("/api/auth/register", async (req, res) => {
     try {
-      const { username, password } = req.body;
+      // Validate the request using Zod schema
+      const userData = userSignupSchema.parse(req.body);
       
-      if (!username || !password) {
-        return res.status(400).json({ message: "Username and password are required" });
+      // Check if user already exists
+      const existingUser = await storage.getUserByUsername(userData.username);
+      if (existingUser) {
+        return res.status(400).json({ message: "Username already exists" });
       }
       
-      // Find user
-      let user = await storage.getUserByUsername(username);
+      // Hash the password
+      const hashedPassword = await bcrypt.hash(userData.password, 10);
       
-      // Create user if doesn't exist (for demo purposes)
-      if (!user) {
-        user = await storage.createUser({
-          username,
-          password, // In a real app, this would be hashed
-          name: "",
-          age: null,
-          diabetesType: "none",
-          preferences: null,
-          language: "ar"
-        });
-      }
+      // Create new user with hashed password (omit confirmPassword)
+      const { confirmPassword, ...userDataWithoutConfirm } = userData;
+      const newUser = await storage.createUser({
+        ...userDataWithoutConfirm,
+        password: hashedPassword
+      });
       
-      // In a real app, you would verify the password here
+      // Create and sign JWT token
+      const token = jwt.sign(
+        { id: newUser.id, username: newUser.username },
+        JWT_SECRET,
+        { expiresIn: '1d' }
+      );
       
-      return res.status(200).json(user);
+      // Return user data and token (excluding password)
+      const { password, ...userWithoutPassword } = newUser;
+      return res.status(201).json({
+        user: userWithoutPassword,
+        token
+      });
     } catch (error) {
-      console.error("Login error:", error);
+      console.error("Registration error:", error);
+      if (error.name === "ZodError") {
+        return res.status(400).json({ message: error.errors });
+      }
       return res.status(500).json({ message: "Internal server error" });
     }
   });
 
+  // User login route
+  app.post("/api/auth/login", async (req, res) => {
+    try {
+      // Validate the request using Zod schema
+      const loginData = userLoginSchema.parse(req.body);
+      
+      // Find user by email
+      const user = await storage.getUserByEmail(loginData.email);
+      if (!user) {
+        return res.status(401).json({ message: "Invalid email or password" });
+      }
+      
+      // Verify password
+      const isPasswordValid = await bcrypt.compare(loginData.password, user.password);
+      if (!isPasswordValid) {
+        return res.status(401).json({ message: "Invalid email or password" });
+      }
+      
+      // Generate JWT token
+      const token = jwt.sign(
+        { id: user.id, username: user.username },
+        JWT_SECRET,
+        { expiresIn: '1d' }
+      );
+      
+      // Return user data and token (excluding password)
+      const { password, ...userWithoutPassword } = user;
+      return res.status(200).json({
+        user: userWithoutPassword,
+        token
+      });
+    } catch (error) {
+      console.error("Login error:", error);
+      if (error.name === "ZodError") {
+        return res.status(400).json({ message: error.errors });
+      }
+      return res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // User logout route (just for API consistency)
   app.post("/api/auth/logout", (req, res) => {
+    // JWT is stateless, so actual logout happens on client side by removing the token
     return res.status(200).json({ message: "Logged out successfully" });
   });
 
   // ===== User Profile Routes =====
-  app.get("/api/user/profile", async (req, res) => {
+  app.get("/api/user/profile", authenticate, async (req: AuthenticatedRequest, res) => {
     try {
-      // For demo purposes, return a default user
-      // In a real app, you would get the user ID from the session
-      const user = await storage.getUser(1);
+      if (!req.user) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+      
+      const user = await storage.getUser(req.user.id);
       
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
       
-      return res.status(200).json(user);
+      // Return user data without password
+      const { password, ...userWithoutPassword } = user;
+      return res.status(200).json(userWithoutPassword);
     } catch (error) {
       console.error("Get profile error:", error);
       return res.status(500).json({ message: "Internal server error" });
     }
   });
 
-  app.patch("/api/user/profile", async (req, res) => {
+  app.patch("/api/user/profile", authenticate, async (req: AuthenticatedRequest, res) => {
     try {
-      const userId = 1; // In a real app, get from session
+      if (!req.user) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+      
+      const userId = req.user.id;
       const userData = req.body;
+      
+      // Don't allow changing username or email through this endpoint
+      delete userData.username;
+      delete userData.email;
+      
+      // If password is being updated, hash it
+      if (userData.password) {
+        userData.password = await bcrypt.hash(userData.password, 10);
+      }
       
       const updatedUser = await storage.updateUser(userId, userData);
       
-      return res.status(200).json(updatedUser);
+      // Return updated user without password
+      const { password, ...userWithoutPassword } = updatedUser;
+      return res.status(200).json(userWithoutPassword);
     } catch (error) {
       console.error("Update profile error:", error);
       return res.status(500).json({ message: "Internal server error" });
@@ -211,10 +314,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // ===== Meal Logs Routes =====
-  app.get("/api/meal-logs", async (req, res) => {
+  app.get("/api/meal-logs", authenticate, async (req: AuthenticatedRequest, res) => {
     try {
-      const userId = 1; // In a real app, get from session
+      if (!req.user) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
       
+      const userId = req.user.id;
       const mealLogs = await storage.getMealLogsByUser(userId);
       
       // Fetch food details for each meal log
@@ -232,17 +338,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/meal-logs", async (req, res) => {
+  app.post("/api/meal-logs", authenticate, async (req: AuthenticatedRequest, res) => {
     try {
+      if (!req.user) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+      
       const schema = z.object({
         foods: z.array(z.object({
           foodId: z.number(),
-          amount: z.number().optional().default(100)
+          amount: z.number().optional().default(100),
+          notes: z.string().optional().nullable()
         }))
       });
 
       const { foods } = schema.parse(req.body);
-      const userId = 1; // In a real app, get from session
+      const userId = req.user.id;
       
       if (!foods || foods.length === 0) {
         return res.status(400).json({ message: "No foods provided" });
@@ -255,24 +366,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
             userId,
             foodId: food.foodId,
             amount: food.amount,
-            notes: null
+            notes: food.notes
           });
         })
       );
       
-      return res.status(201).json(mealLogs);
+      // Fetch food details for the newly created meal logs
+      const mealLogsWithFood = await Promise.all(
+        mealLogs.map(async (log) => {
+          const food = await storage.getFood(log.foodId);
+          return { ...log, food };
+        })
+      );
+      
+      return res.status(201).json(mealLogsWithFood);
     } catch (error) {
       console.error("Add meal log error:", error);
+      if (error.name === "ZodError") {
+        return res.status(400).json({ message: error.errors });
+      }
       return res.status(500).json({ message: "Internal server error" });
     }
   });
 
-  app.delete("/api/meal-logs/:id", async (req, res) => {
+  app.delete("/api/meal-logs/:id", authenticate, async (req: AuthenticatedRequest, res) => {
     try {
+      if (!req.user) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+      
       const logId = parseInt(req.params.id);
       
       if (isNaN(logId)) {
         return res.status(400).json({ message: "Invalid log ID" });
+      }
+      
+      // Get the meal log to check ownership
+      const mealLog = await storage.getMealLog(logId);
+      
+      if (!mealLog) {
+        return res.status(404).json({ message: "Meal log not found" });
+      }
+      
+      // Ensure the user owns the meal log
+      if (mealLog.userId !== req.user.id) {
+        return res.status(403).json({ message: "Forbidden: You don't have permission to delete this meal log" });
       }
       
       const success = await storage.deleteMealLog(logId);
@@ -289,11 +427,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // ===== Chatbot Routes =====
-  app.post("/api/chat", async (req, res) => {
+  app.post("/api/chat", authenticate, async (req: AuthenticatedRequest, res) => {
     try {
+      if (!req.user) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+      
       const schema = insertChatMessageSchema.pick({ message: true });
       const { message } = schema.parse(req.body);
-      const userId = 1; // In a real app, get from session
+      const userId = req.user.id;
+      
+      // Get user language preference
+      const user = await storage.getUser(userId);
+      const language = user?.language || 'ar'; // Default to Arabic if not specified
       
       // Save user message
       await storage.createChatMessage({
@@ -302,8 +448,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         isUser: true
       });
       
-      // Generate response from OpenAI
-      const answer = await chatWithOpenAI(message);
+      // Generate response from OpenAI with user's language preference
+      const answer = await chatWithOpenAI(message, language);
       
       // Save bot response
       await storage.createChatMessage({
@@ -315,6 +461,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(200).json({ answer });
     } catch (error) {
       console.error("Chat error:", error);
+      if (error.name === "ZodError") {
+        return res.status(400).json({ message: error.errors });
+      }
       return res.status(500).json({ message: "Internal server error" });
     }
   });

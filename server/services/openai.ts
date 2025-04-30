@@ -96,12 +96,15 @@ export async function chatWithOpenAI(query: string, language: string = 'ar'): Pr
 }
 
 // Function to get responses from QA database
-async function getQAResponseFromDatabase(query: string, language: string): Promise<any[]> {
-  // Import storage here to avoid circular dependency
-  const { storage } = require('../storage');
-  
+/**
+ * Search the QA database for relevant answers
+ * @param query User's message/question
+ * @param language Language code ('ar' or 'en')
+ * @returns Promise with matching QA entries
+ */
+export async function searchQADatabase(query: string, language: string = 'ar'): Promise<any[]> {
   try {
-    // Get all QA entries that match the language
+    // Get all QA entries that match the language from the storage instance
     const qaEntries = await storage.getQAByLanguage(language);
     
     // Simple matching algorithm - check if the question contains keywords from the query

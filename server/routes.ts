@@ -56,26 +56,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // ===== Authentication Routes =====
   // User registration route
-  app.post("/api/auth/register", async (req, res) => {
+  app.post("/api/register", async (req, res) => {
     try {
-      // Validate the request using Zod schema
-      const userData = userSignupSchema.parse(req.body);
+      console.log("Registration request received:", req.body);
+      
+      // Create simplified validation instead of using Zod schema
+      const { username, email, password, name, language } = req.body;
+      
+      // Basic validation
+      if (!username || !password) {
+        return res.status(400).json({ message: "Username and password are required" });
+      }
       
       // Check if user already exists
-      const existingUser = await storage.getUserByUsername(userData.username);
+      const existingUser = await storage.getUserByUsername(username);
       if (existingUser) {
         return res.status(400).json({ message: "Username already exists" });
       }
       
       // Hash the password
-      const hashedPassword = await bcrypt.hash(userData.password, 10);
+      const hashedPassword = await bcrypt.hash(password, 10);
       
-      // Create new user with hashed password (omit confirmPassword)
-      const { confirmPassword, ...userDataWithoutConfirm } = userData;
+      // Create new user with hashed password
       const newUser = await storage.createUser({
-        ...userDataWithoutConfirm,
-        password: hashedPassword
+        username,
+        email: email || `${username}@example.com`,
+        password: hashedPassword,
+        name: name || null,
+        language: language || "ar",
+        age: null,
+        diabetesType: null,
+        preferences: null,
+        createdAt: new Date()
       });
+      
+      console.log("User created successfully:", username);
       
       // Create and sign JWT token
       const token = jwt.sign(
@@ -85,7 +100,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       );
       
       // Return user data and token (excluding password)
-      const { password, ...userWithoutPassword } = newUser;
+      const { password: _, ...userWithoutPassword } = newUser;
       return res.status(201).json({
         user: userWithoutPassword,
         token
@@ -612,6 +627,24 @@ async function initializeSampleData() {
       }
       
       console.log("Sample Q&A pairs created");
+    }
+    
+    // Create a demo user for testing
+    const testUser = await storage.getUserByUsername("testuser");
+    if (!testUser) {
+      const hashedPassword = await bcrypt.hash("password123", 10);
+      await storage.createUser({
+        username: "testuser",
+        email: "test@example.com",
+        password: hashedPassword,
+        name: "Test User",
+        language: "en",
+        age: 35,
+        diabetesType: "type2",
+        preferences: null,
+        createdAt: new Date()
+      });
+      console.log("Demo user created: testuser / password123");
     }
     
   } catch (error) {

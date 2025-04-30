@@ -65,11 +65,13 @@ const ChatbotAssistant: React.FC = () => {
         language: language 
       });
       
-      if (!response.ok) {
-        throw new Error(`Server responded with ${response.status}: ${response.statusText}`);
-      }
-      
+      // Since our server always returns a 200 status with an answer property
+      // (even for errors), we don't need to check response.ok
       const data = await response.json();
+      
+      if (!data.answer) {
+        throw new Error("Invalid response from server");
+      }
       
       const botMessage: ChatMessage = {
         id: Date.now() + 1,
@@ -86,13 +88,15 @@ const ChatbotAssistant: React.FC = () => {
       
     } catch (error) {
       console.error("Error sending message:", error);
+      
+      // Only show toast for unexpected errors (like network issues)
       toast({
         title: t("chatbot.error"),
         description: t("chatbot.errorDesc"),
         variant: "destructive"
       });
       
-      // Add error message
+      // Add fallback error message
       const errorMessage: ChatMessage = {
         id: Date.now() + 1,
         userId: 0,
@@ -240,9 +244,35 @@ const ChatbotAssistant: React.FC = () => {
         </Button>
       </div>
       
-      <div className="mt-4 text-sm text-neutral-dark flex items-center">
-        <HelpCircle className="h-4 w-4 rtl:ml-1 ltr:mr-1" />
-        {t("chatbot.suggestion")}
+      <div className="mt-4 text-sm text-neutral-dark">
+        <div className="flex items-center mb-2">
+          <HelpCircle className="h-4 w-4 rtl:ml-1 ltr:mr-1" />
+          {t("chatbot.suggestion")}
+        </div>
+        <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <button 
+            onClick={() => {
+              const suggestion = language === 'ar' 
+                ? 'ما هي الأطعمة المناسبة لمرضى السكري؟' 
+                : 'What foods are suitable for diabetics?';
+              setInput(suggestion);
+            }}
+            className="text-left text-primary hover:text-primary-dark px-2 py-1 rounded-md hover:bg-neutral-lightest dark:hover:bg-gray-700 transition-colors"
+          >
+            {language === 'ar' ? 'ما هي الأطعمة المناسبة لمرضى السكري؟' : 'What foods are suitable for diabetics?'}
+          </button>
+          <button 
+            onClick={() => {
+              const suggestion = language === 'ar' 
+                ? 'كيف يمكنني خفض نسبة السكر في الدم بعد الوجبات؟' 
+                : 'How can I lower my blood sugar after meals?';
+              setInput(suggestion);
+            }}
+            className="text-left text-primary hover:text-primary-dark px-2 py-1 rounded-md hover:bg-neutral-lightest dark:hover:bg-gray-700 transition-colors"
+          >
+            {language === 'ar' ? 'كيف يمكنني خفض نسبة السكر في الدم بعد الوجبات؟' : 'How can I lower my blood sugar after meals?'}
+          </button>
+        </div>
       </div>
     </div>
   );

@@ -1,7 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useLanguage } from '@/hooks/useLanguage';
 import { useToast } from '@/hooks/use-toast';
-import { t } from '@/lib/i18n';
 
 export function useSpeech() {
   const [isSpeaking, setIsSpeaking] = useState(false);
@@ -95,8 +94,8 @@ export function useSpeech() {
       console.error('Speech synthesis error:', event);
       setIsSpeaking(false);
       toast({
-        title: t('speech.error'),
-        description: t('speech.errorDesc', { error: event.error }),
+        title: 'Speech Error',
+        description: 'There was an error while trying to speak the text',
         variant: 'destructive'
       });
     };

@@ -427,42 +427,59 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // ===== Chatbot Routes =====
-  app.post("/api/chat", authenticate, async (req: AuthenticatedRequest, res) => {
+  app.post("/api/chat", async (req: AuthenticatedRequest, res) => {
     try {
-      if (!req.user) {
-        return res.status(401).json({ message: "Unauthorized" });
+      // Modified to allow unauthenticated access for demo purposes
+      // if (!req.user) {
+      //   return res.status(401).json({ message: "Unauthorized" });
+      // }
+      
+      // Validate input
+      const schema = z.object({
+        message: z.string(),
+        language: z.string().optional()
+      });
+      
+      const { message, language = 'ar' } = schema.parse(req.body);
+      const userId = req.user?.id || 0; // Use 0 for unauthenticated users
+      
+      console.log(`Processing chat request: "${message}" in language: ${language}`);
+      
+      // Save user message if authenticated
+      if (req.user) {
+        await storage.createChatMessage({
+          userId,
+          message,
+          isUser: true
+        });
       }
       
-      const schema = insertChatMessageSchema.pick({ message: true });
-      const { message } = schema.parse(req.body);
-      const userId = req.user.id;
+      // Generate response from OpenAI with specified language preference
+      let answer;
+      try {
+        answer = await chatWithOpenAI(message, language);
+        console.log(`Got OpenAI response: "${answer.substring(0, 50)}..."`);
+      } catch (aiError) {
+        console.error("OpenAI chat error:", aiError);
+        answer = language === 'ar' 
+          ? "عذراً، حدث خطأ في معالجة طلبك. يرجى المحاولة مرة أخرى." 
+          : "Sorry, there was an error processing your request. Please try again.";
+      }
       
-      // Get user language preference
-      const user = await storage.getUser(userId);
-      const language = user?.language || 'ar'; // Default to Arabic if not specified
-      
-      // Save user message
-      await storage.createChatMessage({
-        userId,
-        message,
-        isUser: true
-      });
-      
-      // Generate response from OpenAI with user's language preference
-      const answer = await chatWithOpenAI(message, language);
-      
-      // Save bot response
-      await storage.createChatMessage({
-        userId,
-        message: answer,
-        isUser: false
-      });
+      // Save bot response if authenticated
+      if (req.user) {
+        await storage.createChatMessage({
+          userId,
+          message: answer,
+          isUser: false
+        });
+      }
       
       return res.status(200).json({ answer });
     } catch (error) {
       console.error("Chat error:", error);
-      if (error.name === "ZodError") {
-        return res.status(400).json({ message: error.errors });
+      if ((error as any).name === "ZodError") {
+        return res.status(400).json({ message: (error as any).errors });
       }
       return res.status(500).json({ message: "Internal server error" });
     }

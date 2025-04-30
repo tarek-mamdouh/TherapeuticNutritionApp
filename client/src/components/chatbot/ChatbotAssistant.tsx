@@ -4,11 +4,18 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Mic, Send, HelpCircle, Lightbulb } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { t } from "@/lib/i18n";
 import { apiRequest } from "@/lib/queryClient";
 import { useSpeech } from "@/hooks/useSpeech";
 import { useLanguage } from "@/hooks/useLanguage";
 import { ChatMessage } from "@shared/schema";
+
+// Define the SpeechRecognition interfaces for TypeScript
+declare global {
+  interface Window {
+    SpeechRecognition: any;
+    webkitSpeechRecognition: any;
+  }
+}
 
 const ChatbotAssistant: React.FC = () => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -18,7 +25,7 @@ const ChatbotAssistant: React.FC = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const { speak, cancelSpeech } = useSpeech();
-  const { language } = useLanguage();
+  const { language, t } = useLanguage();
   
   // Initialize with welcome message
   useEffect(() => {
@@ -30,7 +37,7 @@ const ChatbotAssistant: React.FC = () => {
       createdAt: new Date()
     };
     setMessages([welcomeMessage]);
-  }, []);
+  }, [t]);
   
   // Scroll to bottom when messages change
   useEffect(() => {
@@ -53,7 +60,15 @@ const ChatbotAssistant: React.FC = () => {
     setIsLoading(true);
     
     try {
-      const response = await apiRequest("POST", "/api/chat", { message: input });
+      const response = await apiRequest("POST", "/api/chat", { 
+        message: input,
+        language: language 
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Server responded with ${response.status}: ${response.statusText}`);
+      }
+      
       const data = await response.json();
       
       const botMessage: ChatMessage = {
@@ -111,6 +126,7 @@ const ChatbotAssistant: React.FC = () => {
     recognition.lang = language === 'ar' ? 'ar-SA' : 'en-US';
     recognition.interimResults = false;
     recognition.maxAlternatives = 1;
+    recognition.continuous = false;
     
     recognition.onstart = () => {
       setIsListening(true);
@@ -127,7 +143,9 @@ const ChatbotAssistant: React.FC = () => {
       // Automatically send the message after a short delay
       setTimeout(() => {
         setIsListening(false);
-        handleSendMessage();
+        if (speechResult.trim() !== "") {
+          handleSendMessage();
+        }
       }, 500);
     };
     
@@ -197,7 +215,7 @@ const ChatbotAssistant: React.FC = () => {
             aria-label={t("chatbot.inputPlaceholder")}
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
+            onKeyDown={(e) => e.key === "Enter" && !isLoading && handleSendMessage()}
             disabled={isListening || isLoading}
           />
           <Button

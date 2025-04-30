@@ -105,16 +105,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Validate the request using Zod schema
       const loginData = userLoginSchema.parse(req.body);
       
-      // Find user by email
-      const user = await storage.getUserByEmail(loginData.email);
+      // Find user by username
+      const user = await storage.getUserByUsername(loginData.username);
       if (!user) {
-        return res.status(401).json({ message: "Invalid email or password" });
+        return res.status(401).json({ message: "Invalid username or password" });
       }
       
       // Verify password
       const isPasswordValid = await bcrypt.compare(loginData.password, user.password);
       if (!isPasswordValid) {
-        return res.status(401).json({ message: "Invalid email or password" });
+        return res.status(401).json({ message: "Invalid username or password" });
       }
       
       // Generate JWT token

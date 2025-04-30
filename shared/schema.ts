@@ -74,7 +74,7 @@ export const userSignupSchema = insertUserSchema.extend({
 });
 
 export const userLoginSchema = z.object({
-  email: z.string().email({ message: "Invalid email address" }),
+  username: z.string().min(3, { message: "Username must be at least 3 characters" }),
   password: z.string().min(1, { message: "Password is required" }),
 });
 

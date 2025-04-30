@@ -1,0 +1,325 @@
+Replit AI Agent Prompt: Therapeutic Nutrition Web App for Diabetic Patients (with Accessibility Support)
+Project Overview
+Develop a web application using React and Tailwind CSS, integrated with an AI model and a backend, to assist diabetic patients—especially those with visual impairments—in analyzing meals and receiving instant nutritional guidance. The app supports food image recognition, manual food entry, nutritional analysis, diabetes suitability evaluation, voice feedback, and a chatbot for user interaction. The app must support Arabic (primary) and English languages, with voice output in both. All steps must be documented clearly.
+Objective
+Build a complete, accessible web application that:
+
+Accepts food images or manual input via a browser.
+Uses AI to identify food and retrieve nutritional data.
+Evaluates food suitability for diabetic patients.
+Provides voice and text feedback.
+Includes a chatbot for dietary queries (voice and text input/output).
+Stores user profiles and medical conditions.
+Supports Arabic and English with accessibility features.
+
+Tech Stack
+
+Frontend: React (with JSX, hosted via CDN) and Tailwind CSS for responsive web UI.
+AI Model: Lightweight food image classification model (e.g., MobileNetV2 or a custom CNN) suitable for API inference.
+Backend: Python with FastAPI (preferred for lightweight APIs) or Flask, hosted on Replit.
+Database: SQLite for local storage of food/nutrition data and user profiles; optionally, Firebase for cloud storage.
+Text-to-Speech (TTS): Web Speech API (SpeechSynthesis) for Arabic and English voice output.
+Speech-to-Text (STT): Web Speech API (SpeechRecognition) for voice input.
+Chatbot: Simple rule-based or pre-trained model (e.g., Dialogflow or custom Python logic) for dietary Q&A.
+Image Processing: TensorFlow.js for client-side AI model inference (if feasible) or API-based inference via backend.
+Localization: Custom React components or i18next for Arabic and English support, with RTL for Arabic.
+
+Core Features
+
+Food Image Recognition:
+
+User uploads a meal photo via browser file input or drag-and-drop.
+AI model identifies food items and returns food names with confidence scores.
+If image recognition fails, display an error and prompt manual entry.
+
+
+Nutritional Information Retrieval:
+
+Map recognized foods to nutritional data (calories, carbs, protein, sugar, fat).
+Store nutritional data in a local SQLite database or JSON file (e.g., 100 common foods).
+Fetch data from a backend API if internet is available.
+
+
+Diabetes Suitability Evaluation:
+
+Evaluate food based on diabetic dietary guidelines (e.g., low sugar, low glycemic index).
+Use predefined thresholds (e.g., sugar < 5g per serving) or food categories (safe, moderate, avoid).
+Display result as "Safe," "Moderate," or "Avoid" with a brief explanation.
+
+
+Voice Feedback (Accessibility):
+
+Use Web Speech API to read aloud:
+Food name(s).
+Nutritional summary (e.g., "200 calories, 10g carbs").
+Suitability (e.g., "This food is safe for diabetics").
+
+
+Support Arabic and English voice output (test browser compatibility for Arabic voices).
+Ensure high-contrast UI, large text, and ARIA attributes for screen reader support.
+
+
+Manual Entry Option:
+
+Provide a searchable dropdown or list of pre-stored foods (e.g., "apple," "rice," "chicken").
+Allow users to select multiple items to compose a meal.
+Store foods in SQLite/JSON for offline access.
+
+
+Chatbot Assistant:
+
+Build an interactive chatbot to answer dietary questions, e.g.:
+"Can I eat bananas?"
+"Suggest a diabetic-friendly dinner."
+"How many calories in grilled chicken?"
+
+
+Support text and voice input/output (using Web Speech API).
+Use rule-based logic or a pre-trained model (e.g., Dialogflow or custom Python script).
+Store common Q&A in a local database for offline access.
+
+
+User Profile Management:
+
+Store user data (name, age, diabetes type, dietary preferences) in SQLite or browser localStorage.
+Allow users to update profiles via a settings page.
+Ensure data privacy with local storage (no external sharing).
+
+
+Localization:
+
+Default to Arabic UI and voice output, with English as a toggleable option.
+Use i18next or custom logic for RTL support and translations.
+Ensure all text and voice outputs are localized.
+
+
+
+AI Model Requirements
+
+Model Type: Lightweight image classification model (e.g., MobileNetV2, EfficientNet-Lite).
+Training Data: Use a dataset of common foods (e.g., Food-101 or a custom dataset with 100+ food classes).
+Output: Food name and confidence score (e.g., {"food": "pizza", "confidence": 0.92}).
+Deployment:
+Prefer API-based inference via backend (FastAPI) to reduce client-side load.
+Optionally, use TensorFlow.js for client-side inference if Replit resources allow.
+
+
+Model Size: Optimize for web (e.g., <50MB if client-side).
+Preprocessing: Handle image resizing and normalization in JavaScript or backend.
+
+Backend Requirements
+
+Framework: FastAPI for RESTful APIs (or Flask if simpler).
+Endpoints:
+POST /predict: Accept food image (base64 or file), return food name and confidence.
+GET /nutrition: Accept food name, return nutritional data.
+POST /chat: Accept user query, return chatbot response.
+
+
+Deployment: Host on Replit with a public URL.
+Database: SQLite for food data, nutritional info, and chatbot Q&A.
+Security: Use HTTPS and CORS for API calls from the web app.
+
+Deliverables
+
+React Web App Source Code:
+
+Full React project with:
+Home page (image upload, manual entry, chatbot, profile).
+Image upload UI (drag-and-drop or file input).
+Nutritional display UI.
+Chatbot interface (text and voice).
+Settings for language and profile.
+
+
+File structure:src/
+  App.jsx
+  components/
+    Home.jsx
+    ImageUpload.jsx
+    NutritionDisplay.jsx
+    Chatbot.jsx
+    Profile.jsx
+  services/
+    api.js
+    speech.js
+    imageProcessing.js
+  assets/
+    foods.json
+    model.tflite (if TensorFlow.js)
+public/
+  index.html
+
+
+
+
+Backend Source Code:
+
+FastAPI/Flask project with:
+API endpoints for image recognition, nutrition data, and chatbot.
+SQLite database schema for foods, nutrition, and Q&A.
+
+
+File structure:main.py
+models/
+  food_classifier.py
+database/
+  foods.db
+  init_db.py
+
+
+
+
+AI Model:
+
+Trained model (TensorFlow.js format or Python for backend inference).
+Python script for model training (if custom dataset used).
+Documentation on model performance (accuracy, size, inference time).
+
+
+Documentation:
+
+Setup Guide: How to run the React app and backend on Replit.
+Code Overview: Explain each major component (frontend, backend, AI).
+API Docs: Swagger/OpenAPI documentation for backend endpoints.
+Model Docs: Describe AI model training, dataset, and deployment.
+User Guide: How diabetic patients use the web app (with screenshots).
+File structure:docs/
+  setup.md
+  code_overview.md
+  api_docs.md
+  model_docs.md
+  user_guide.md
+
+
+
+
+
+Implementation Steps
+
+Setup Environment:
+
+Initialize a Replit project with Node.js (for React) and Python (for backend).
+Install dependencies: React (via CDN), Tailwind CSS, FastAPI, TensorFlow, SQLite, i18next.
+
+
+Database Setup:
+
+Create SQLite database with tables:
+foods (name, calories, carbs, protein, sugar, fat, diabetic_suitability).
+users (id, name, age, diabetes_type, preferences).
+qa (question, answer, language).
+
+
+Populate with sample data (100 foods, 50 Q&A pairs).
+
+
+AI Model Development:
+
+Train a lightweight model (MobileNetV2) on a food dataset.
+Convert to TensorFlow.js format (if client-side) or keep in Python for backend.
+Integrate with React via TensorFlow.js or API calls.
+
+
+Backend Development:
+
+Build FastAPI server with /predict, /nutrition, /chat endpoints.
+Connect to SQLite database.
+Deploy on Replit with a public URL.
+
+
+React App Development:
+
+Create UI components for home, image upload, nutrition display, chatbot, profile.
+Implement image upload with drag-and-drop or file input.
+Integrate AI model (client-side or API).
+Add TTS and STT using Web Speech API.
+Implement chatbot with text/voice input/output.
+Add localization for Arabic/English with RTL support.
+
+
+Testing:
+
+Test image recognition accuracy (>80% on common foods).
+Test voice input/output in Arabic and English (browser compatibility).
+Test chatbot responses for relevance.
+Test offline functionality (manual entry, local storage).
+Test accessibility (ARIA, screen readers, high contrast).
+
+
+Documentation:
+
+Write detailed docs for setup, code, APIs, model, and user guide.
+Include screenshots and sample API responses.
+
+
+
+Constraints
+
+Replit Limitations: Ensure code runs within Replit’s resource limits (CPU, memory, storage).
+Offline Support: Use localStorage and cached API responses for core features.
+Accessibility: Ensure voice feedback, ARIA attributes, and high-contrast UI.
+Model Size: Keep AI model <50MB for client-side (if used).
+Language: Arabic is primary; ensure RTL and voice support are robust.
+Browser Compatibility: Test on Chrome and Firefox for Web Speech API support.
+
+Enhancements (Added by Grok)
+
+Offline-First Design: Cache API responses and use localStorage for all core features.
+Accessibility Features:
+Add keyboard navigation for all UI elements.
+Include alt text for images and ARIA labels for dynamic content.
+
+
+Chatbot Intelligence:
+Use a pre-trained small language model (e.g., DistilBERT) for better Q&A if Replit resources allow.
+Include meal planning suggestions (e.g., "Diabetic-friendly breakfast ideas").
+
+
+User Onboarding:
+Add a tutorial modal to guide first-time users.
+Include a quiz to assess diabetes knowledge and tailor recommendations.
+
+
+Analytics:
+Log user interactions (e.g., foods scanned, questions asked) in localStorage.
+Display weekly dietary summaries (e.g., average carbs consumed).
+
+
+
+Final Output
+
+Full source code for:
+React web app (frontend).
+FastAPI backend.
+AI model (TensorFlow.js or Python) and training script.
+
+
+SQLite database with sample data.
+Comprehensive documentation covering setup, code, APIs, model, and user guide.
+Deployed backend and web app on Replit with public URLs.
+Tested web app compatible with Chrome and Firefox.
+
+Documentation Requirements
+
+Provide step-by-step explanations for:
+Setting up the Replit environment.
+Training and deploying the AI model.
+Running the backend and frontend.
+Using the web app as a diabetic patient.
+
+
+Include diagrams (e.g., app architecture, database schema).
+Ensure all code is commented for clarity.
+
+Acceptance Criteria
+
+Web app runs on Replit without errors.
+Image recognition identifies at least 80% of common foods correctly.
+Voice feedback works in Arabic and English (Chrome/Firefox).
+Chatbot answers dietary questions accurately (90% relevance).
+App supports offline mode for manual entry and nutritional data.
+UI is accessible (voice, ARIA, high contrast, keyboard navigation).
+Documentation is complete and clear.
+
+Please execute this prompt on Replit, generating all source code, database, model, and documentation. Report progress and any issues encountered during development.

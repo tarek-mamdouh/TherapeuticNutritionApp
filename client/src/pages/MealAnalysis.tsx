@@ -1,9 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
 import { t } from "@/lib/i18n";
+import { useSpeech } from "@/hooks/useSpeech";
 import ImageUpload from "@/components/food/ImageUpload";
 import ManualEntry from "@/components/food/ManualEntry";
 import RecognizedFood from "@/components/food/RecognizedFood";
@@ -20,6 +21,7 @@ const MealAnalysis: React.FC = () => {
   const [showResults, setShowResults] = useState(false);
   const { toast } = useToast();
   const [, setLocation] = useLocation();
+  const { speak } = useSpeech();
 
   const toggleEntryMethod = () => {
     setIsManualEntry(!isManualEntry);
@@ -168,6 +170,18 @@ const MealAnalysis: React.FC = () => {
     // Navigate to chatbot page
     setLocation("/chatbot");
   };
+  
+  // Effect to read recognized foods aloud when they're loaded
+  useEffect(() => {
+    if (recognizedFoods.length > 0 && !isAnalyzing && showResults) {
+      // Create a string of food names
+      const foodNames = recognizedFoods.map(food => food.name).join(', ');
+      
+      // Speak the introduction and food names
+      const introMessage = t("mealAnalysis.recognizedFoodsIntro");
+      speak(`${introMessage}: ${foodNames}`);
+    }
+  }, [recognizedFoods, isAnalyzing, showResults, speak, t]);
 
   return (
     <>

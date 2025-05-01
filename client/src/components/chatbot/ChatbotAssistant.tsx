@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Mic, Send, HelpCircle, Lightbulb } from "lucide-react";
+import { Mic, Send, HelpCircle, Lightbulb, StopCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useSpeech } from "@/hooks/useSpeech";
@@ -23,7 +23,9 @@ const ChatbotAssistant: React.FC = () => {
   const [input, setInput] = useState("");
   const [isListening, setIsListening] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [recordingTimer, setRecordingTimer] = useState<number | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const recognitionRef = useRef<any>(null);
   const { toast } = useToast();
   const { speak, cancelSpeech } = useSpeech();
   const { language, t } = useLanguage();
@@ -44,6 +46,19 @@ const ChatbotAssistant: React.FC = () => {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+  
+  // Cleanup effect for speech recognition
+  useEffect(() => {
+    return () => {
+      // Clean up recording on unmount
+      if (recognitionRef.current) {
+        recognitionRef.current.stop();
+      }
+      if (recordingTimer) {
+        clearInterval(recordingTimer);
+      }
+    };
+  }, [recordingTimer]);
   
   const handleSendMessage = async () => {
     if (input.trim() === "") return;
@@ -112,6 +127,7 @@ const ChatbotAssistant: React.FC = () => {
     }
   };
   
+  // Start listening when the button is pressed down (WhatsApp-style)
   const startListening = () => {
     if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
       toast({
@@ -129,9 +145,18 @@ const ChatbotAssistant: React.FC = () => {
     const recognition = new SpeechRecognition();
     
     recognition.lang = language === 'ar' ? 'ar-SA' : 'en-US';
-    recognition.interimResults = false;
+    recognition.interimResults = true;
     recognition.maxAlternatives = 1;
-    recognition.continuous = false;
+    recognition.continuous = true;
+    
+    // Store the recognition instance in ref
+    recognitionRef.current = recognition;
+    
+    // Start a timer to show recording duration
+    const timer = window.setInterval(() => {
+      // This is just to update the UI, actual recording time is handled by the browser
+    }, 100);
+    setRecordingTimer(timer);
     
     recognition.onstart = () => {
       setIsListening(true);
@@ -142,26 +167,24 @@ const ChatbotAssistant: React.FC = () => {
     };
     
     recognition.onresult = (event: SpeechRecognitionEvent) => {
-      const speechResult = event.results[0][0].transcript;
+      // Get the latest transcript
+      const lastResultIndex = event.results.length - 1;
+      const speechResult = event.results[lastResultIndex][0].transcript;
       setInput(speechResult);
-      
-      // Automatically send the message after a short delay
-      setTimeout(() => {
-        setIsListening(false);
-        if (speechResult.trim() !== "") {
-          handleSendMessage();
-        }
-      }, 500);
     };
     
     recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
       console.error('Speech recognition error', event.error);
       setIsListening(false);
-      toast({
-        title: t("speech.error"),
-        description: t("speech.errorDesc", { error: event.error }),
-        variant: "destructive"
-      });
+      stopRecording();
+      
+      if (event.error !== 'aborted') {
+        toast({
+          title: t("speech.error"),
+          description: t("speech.errorDesc", { error: event.error }),
+          variant: "destructive"
+        });
+      }
     };
     
     recognition.onend = () => {
@@ -169,6 +192,26 @@ const ChatbotAssistant: React.FC = () => {
     };
     
     recognition.start();
+  };
+  
+  // Stop listening when button is released and send the message
+  const stopRecording = () => {
+    if (recognitionRef.current) {
+      recognitionRef.current.stop();
+      recognitionRef.current = null;
+    }
+    
+    if (recordingTimer) {
+      clearInterval(recordingTimer);
+      setRecordingTimer(null);
+    }
+    
+    // Send the message if there's input
+    if (input.trim() !== "") {
+      setTimeout(() => {
+        handleSendMessage();
+      }, 300);
+    }
   };
   
   return (
@@ -234,12 +277,20 @@ const ChatbotAssistant: React.FC = () => {
           <Button
             variant="ghost"
             size="icon"
-            onClick={startListening}
-            disabled={isListening || isLoading}
+            onMouseDown={startListening}
+            onMouseUp={stopRecording}
+            onMouseLeave={isListening ? stopRecording : undefined}
+            onTouchStart={startListening}
+            onTouchEnd={stopRecording}
+            disabled={isLoading}
             className="absolute left-2 rtl:right-2 rtl:left-auto top-1/2 transform -translate-y-1/2 text-primary hover:text-primary-dark transition-colors accessibility-focus"
-            aria-label={t("chatbot.useMicrophone")}
+            aria-label={t("chatbot.holdToSpeak")}
           >
-            <Mic className={`h-6 w-6 ${isListening ? "text-accent animate-pulse" : ""}`} />
+            {isListening ? (
+              <StopCircle className="h-6 w-6 text-accent animate-pulse" />
+            ) : (
+              <Mic className="h-6 w-6" />
+            )}
           </Button>
         </div>
         

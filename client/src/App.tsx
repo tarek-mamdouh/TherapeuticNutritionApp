@@ -1,4 +1,4 @@
-import { Switch, Route } from "wouter";
+import { Switch, Route, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -13,17 +13,31 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { useLanguage } from "@/hooks/useLanguage";
 import { useEffect } from "react";
 import { UserProvider } from "@/contexts/UserContext";
+import Layout from "@/components/Layout";
 
-function Router() {
+function AppContent() {
+  const [location] = useLocation();
+  const isAuthPage = location === "/auth";
+  
   return (
-    <Switch>
-      <ProtectedRoute path="/" component={MealAnalysis} />
-      <Route path="/chatbot" component={ChatbotPage} />
-      <ProtectedRoute path="/meal-log" component={MealLog} />
-      <ProtectedRoute path="/profile" component={Profile} />
-      <Route path="/auth" component={AuthPage} />
-      <Route component={NotFound} />
-    </Switch>
+    <>
+      {isAuthPage ? (
+        <Switch>
+          <Route path="/auth" component={AuthPage} />
+        </Switch>
+      ) : (
+        <Layout>
+          <Switch>
+            <Route path="/" component={MealAnalysis} />
+            <Route path="/chatbot" component={ChatbotPage} />
+            <ProtectedRoute path="/meal-log" component={MealLog} />
+            <ProtectedRoute path="/profile" component={Profile} />
+            <Route component={NotFound} />
+          </Switch>
+        </Layout>
+      )}
+      <Toaster />
+    </>
   );
 }
 
@@ -42,8 +56,7 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <UserProvider>
-          <Router />
-          <Toaster />
+          <AppContent />
         </UserProvider>
       </TooltipProvider>
     </QueryClientProvider>

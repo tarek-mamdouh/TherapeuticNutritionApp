@@ -27,27 +27,11 @@ export async function recognizeFoodWithPerplexity(imageBase64: string): Promise<
         messages: [
           {
             role: "system",
-            content: [
-              {
-                type: "text",
-                text: "أنت خبير في تحليل الصور والتعرف على الأطعمة. قم بتحليل الصورة وتحديد جميع الأطعمة الموجودة فيها. اذكر الأطعمة باللغة العربية. قدم إجابتك بصيغة JSON تحتوي على مصفوفة foods، حيث كل عنصر يحتوي على name (اسم الطعام بالعربية) وconfidence (قيمة الثقة بين 0 و1). اذكر فقط الأطعمة الأكثر احتمالاً (بحد أقصى 5 عناصر)."
-              }
-            ]
+            content: "أنت خبير في تحليل الصور والتعرف على الأطعمة. قم بتحليل الصورة وتحديد جميع الأطعمة الموجودة فيها. اذكر الأطعمة باللغة العربية. قدم إجابتك بصيغة JSON تحتوي على مصفوفة foods، حيث كل عنصر يحتوي على name (اسم الطعام بالعربية) وconfidence (قيمة الثقة بين 0 و1). اذكر فقط الأطعمة الأكثر احتمالاً (بحد أقصى 5 عناصر)."
           },
           {
             role: "user",
-            content: [
-              {
-                type: "text",
-                text: "حدد جميع الأطعمة الموجودة في هذه الصورة. قدم الإجابة بصيغة JSON فقط بالصيغة التالية:\n```json\n{\"foods\": [{\"name\": \"اسم الطعام\", \"confidence\": 0.9}]}\n```"
-              },
-              {
-                type: "image_url",
-                image_url: {
-                  url: `data:image/jpeg;base64,${imageBase64}`
-                }
-              }
-            ]
+            content: "حدد جميع الأطعمة الموجودة في هذه الصورة. قدم الإجابة بصيغة JSON فقط"
           }
         ],
         temperature: 0.2,
@@ -168,12 +152,7 @@ export async function chatWithPerplexity(query: string, language: string = 'ar')
           },
           {
             role: "user",
-            content: [
-              {
-                type: "text",
-                text: query
-              }
-            ]
+            content: query
           }
         ],
         temperature: 0.2,

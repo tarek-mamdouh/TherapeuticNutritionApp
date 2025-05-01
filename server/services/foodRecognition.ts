@@ -1,4 +1,5 @@
 import { recognizeFoodWithPerplexity } from "./perplexity";
+import { recognizeFoodWithOpenAI } from "./openai";
 import { RecognizedFood } from "@shared/schema";
 import { storage } from "../storage";
 
@@ -12,17 +13,36 @@ export async function recognizeFood(imageBuffer: Buffer): Promise<RecognizedFood
     // Convert buffer to base64
     const base64Image = imageBuffer.toString("base64");
     
-    // Use Perplexity API to recognize food
-    const recognizedFoods = await recognizeFoodWithPerplexity(base64Image);
-    
-    // If API recognition fails or returns empty, use sample data
-    if (!recognizedFoods || recognizedFoods.length === 0) {
-      console.log("Food recognition returned no results, using fallback foods");
-      return getFallbackFoods();
+    // Try to use Perplexity API first
+    try {
+      const perplexityFoods = await recognizeFoodWithPerplexity(base64Image);
+      
+      // If Perplexity succeeded, return the results
+      if (perplexityFoods && perplexityFoods.length > 0) {
+        console.log("Successfully recognized foods with Perplexity:", perplexityFoods);
+        return perplexityFoods;
+      }
+    } catch (perplexityError) {
+      console.error("Perplexity API error:", perplexityError);
+      // Continue to next approach (OpenAI)
     }
     
-    console.log("Successfully recognized foods:", recognizedFoods);
-    return recognizedFoods;
+    // Fallback to OpenAI if Perplexity failed
+    try {
+      console.log("Falling back to OpenAI for food recognition");
+      const openAIFoods = await recognizeFoodWithOpenAI(base64Image);
+      
+      if (openAIFoods && openAIFoods.length > 0) {
+        console.log("Successfully recognized foods with OpenAI:", openAIFoods);
+        return openAIFoods;
+      }
+    } catch (openAIError) {
+      console.error("OpenAI API error:", openAIError);
+    }
+    
+    // If all API attempts fail, use sample data
+    console.log("Food recognition returned no results from any API, using fallback foods");
+    return getFallbackFoods();
   } catch (error) {
     console.error("Food recognition error:", error);
     // Return fallback foods if there's an error

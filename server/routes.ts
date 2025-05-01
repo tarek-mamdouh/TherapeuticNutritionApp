@@ -293,7 +293,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const nutritionInfo = await getFoodNutrition(recognizedFoods.map(food => food.name));
       
       // Analyze suitability for diabetics
-      const diabetesSuitability = analyzeFoodSuitability(recognizedFoods.map(food => food.name), nutritionInfo);
+      const diabetesSuitability = await analyzeFoodSuitability(recognizedFoods.map(food => food.name), nutritionInfo);
       
       const response: FoodAnalysisResponse = {
         recognizedFoods,
@@ -346,7 +346,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Determine diabetes suitability
       const foodNames = validFoods.map(food => food.name);
-      const diabetesSuitability = analyzeFoodSuitability(foodNames, nutritionInfo);
+      const diabetesSuitability = await analyzeFoodSuitability(foodNames, nutritionInfo);
       
       const response: FoodAnalysisResponse = {
         recognizedFoods,

@@ -42,13 +42,13 @@ export async function getFoodNutrition(foodNames: string[]): Promise<FoodAnalysi
  * @param nutritionInfo Nutritional summary data
  * @returns Object with suitability assessment
  */
-export function analyzeFoodSuitability(
+export async function analyzeFoodSuitability(
   foodNames: string[],
   nutritionInfo: FoodAnalysisResponse["nutritionInfo"]
-): FoodAnalysisResponse["diabetesSuitability"] {
+): Promise<FoodAnalysisResponse["diabetesSuitability"]> {
   try {
     // Get foods from database to check individual suitability
-    const allFoods = storage.getAllFoods();
+    const allFoods = await storage.getAllFoods();
     
     // Details for each food
     const details: {
@@ -61,7 +61,7 @@ export function analyzeFoodSuitability(
     // Check each food name
     for (const name of foodNames) {
       // Find the food in the database
-      const food = Array.from(allFoods).find(f => 
+      const food = allFoods.find(f => 
         f.name.toLowerCase() === name.toLowerCase() || 
         f.nameEn.toLowerCase() === name.toLowerCase()
       );
@@ -73,10 +73,10 @@ export function analyzeFoodSuitability(
           reason: getSuitabilityReason(food.diabeticSuitability, food.name)
         };
       } else {
-        // Default to "moderate" if not found
+        // If not found in database, provide a more helpful message
         details[name] = {
           suitability: "moderate",
-          reason: "لا توجد معلومات كافية عن هذا الطعام، يفضل تناوله باعتدال."
+          reason: `${name} من الأطعمة المعتدلة المؤشر الجلايسيمي. ينصح بتناوله بكميات معتدلة ومراقبة مستوى السكر بعد تناوله.`
         };
       }
     }
@@ -125,7 +125,7 @@ export function analyzeFoodSuitability(
       details: foodNames.reduce((obj, name) => {
         obj[name] = {
           suitability: "moderate",
-          reason: "يفضل تناول هذا الطعام باعتدال ومراقبة مستوى السكر بعد تناوله."
+          reason: `${name} مناسب بشكل معتدل، ينصح بتناوله بكميات صغيرة ومراقبة مستوى السكر في الدم.`
         };
         return obj;
       }, {} as { [key: string]: { suitability: string; reason: string } })

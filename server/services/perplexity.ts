@@ -1,11 +1,92 @@
 /**
  * Perplexity AI API service
  * Uses the Perplexity API to generate conversational responses for the chatbot
+ * and for image recognition tasks
  */
 
 // Ensure we have the API key
 if (!process.env.PERPLEXITY_API_KEY) {
   console.error('PERPLEXITY_API_KEY is not set in environment variables');
+}
+
+/**
+ * Recognize food from an image using Perplexity's vision capabilities
+ * @param imageBase64 Base64-encoded image
+ * @returns Promise with array of recognized foods and confidence scores
+ */
+export async function recognizeFoodWithPerplexity(imageBase64: string): Promise<{ name: string, confidence: number }[]> {
+  try {
+    const response = await fetch('https://api.perplexity.ai/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.PERPLEXITY_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: "llama-3.1-sonar-small-128k-online",
+        messages: [
+          {
+            role: "system",
+            content: "أنت خبير في تحليل الصور والتعرف على الأطعمة. قم بتحليل الصورة وتحديد جميع الأطعمة الموجودة فيها. اذكر الأطعمة باللغة العربية. قدم إجابتك بصيغة JSON تحتوي على مصفوفة foods، حيث كل عنصر يحتوي على name (اسم الطعام بالعربية) وconfidence (قيمة الثقة بين 0 و1). اذكر فقط الأطعمة الأكثر احتمالاً (بحد أقصى 5 عناصر)."
+          },
+          {
+            role: "user",
+            content: [
+              "حدد جميع الأطعمة الموجودة في هذه الصورة. قدم الإجابة بصيغة JSON فقط بالصيغة التالية:\n```json\n{\"foods\": [{\"name\": \"اسم الطعام\", \"confidence\": 0.9}]}\n```",
+              {
+                type: "image_url",
+                image_url: `data:image/jpeg;base64,${imageBase64}`
+              }
+            ]
+          }
+        ],
+        temperature: 0.2,
+        max_tokens: 500,
+        top_p: 0.9,
+        stream: false,
+        presence_penalty: 0,
+        frequency_penalty: 1
+      })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.text();
+      console.error(`Perplexity API error (${response.status}):`, errorData);
+      throw new Error(`API request failed with status ${response.status}`);
+    }
+
+    const data = await response.json();
+    
+    // Extract the assistant's message from the response
+    const content = data.choices[0].message.content;
+    
+    // Parse JSON from content - extract it from potential text
+    const jsonMatch = content.match(/```json\s*([\s\S]*?)\s*```/) || content.match(/{[\s\S]*?}/);
+    let jsonStr = jsonMatch ? jsonMatch[0] : content;
+    
+    // Clean up the string (remove markdown code blocks if present)
+    jsonStr = jsonStr.replace(/```json|```/g, '').trim();
+    
+    try {
+      const result = JSON.parse(jsonStr);
+      
+      // Ensure we have the expected format
+      if (Array.isArray(result.foods)) {
+        return result.foods.map((food: any) => ({
+          name: food.name,
+          confidence: parseFloat(food.confidence) || 0.8
+        }));
+      }
+      
+      return [];
+    } catch (jsonError) {
+      console.error("Error parsing JSON from Perplexity response:", jsonError);
+      return [];
+    }
+  } catch (error) {
+    console.error("Error calling Perplexity Vision API:", error);
+    return [];
+  }
 }
 
 /**

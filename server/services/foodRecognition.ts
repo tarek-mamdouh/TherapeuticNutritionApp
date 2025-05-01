@@ -1,4 +1,4 @@
-import { recognizeFoodWithOpenAI } from "./openai";
+import { recognizeFoodWithPerplexity } from "./perplexity";
 import { RecognizedFood } from "@shared/schema";
 import { storage } from "../storage";
 
@@ -12,14 +12,16 @@ export async function recognizeFood(imageBuffer: Buffer): Promise<RecognizedFood
     // Convert buffer to base64
     const base64Image = imageBuffer.toString("base64");
     
-    // Use OpenAI to recognize food
-    const recognizedFoods = await recognizeFoodWithOpenAI(base64Image);
+    // Use Perplexity API to recognize food
+    const recognizedFoods = await recognizeFoodWithPerplexity(base64Image);
     
     // If API recognition fails or returns empty, use sample data
     if (!recognizedFoods || recognizedFoods.length === 0) {
+      console.log("Food recognition returned no results, using fallback foods");
       return getFallbackFoods();
     }
     
+    console.log("Successfully recognized foods:", recognizedFoods);
     return recognizedFoods;
   } catch (error) {
     console.error("Food recognition error:", error);

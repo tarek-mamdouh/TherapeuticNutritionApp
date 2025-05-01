@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { chatWithOpenAI } from "./services/openai";
 import { chatWithPerplexity } from "./services/perplexity";
+import { chatWithGemini } from "./services/gemini";
 import { recognizeFood } from "./services/foodRecognition";
 import { getFoodNutrition, analyzeFoodSuitability } from "./services/nutritionDatabase";
 import multer from "multer";
@@ -501,33 +502,59 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      // Try to generate response from Perplexity API first, then fall back to OpenAI if needed
-      let answer;
+      // Multi-model approach using all available APIs
+      let answer: string | null = null;
+      let allResponses: string[] = [];
+      const diabetesKeywords = ['سكر', 'سكري', 'diabetes', 'sugar', 'glucose', 'insulin', 'انسولين'];
+      const isDiabetesQuestion = diabetesKeywords.some(keyword => message.toLowerCase().includes(keyword));
       
-      // Try Perplexity API first
+      // Try Gemini API first
       try {
-        answer = await chatWithPerplexity(message, language);
-        console.log(`Got Perplexity response: "${answer.substring(0, 50)}..."`);
+        const geminiAnswer = await chatWithGemini(message, language);
+        if (geminiAnswer) {
+          console.log(`Got Gemini response: "${geminiAnswer.substring(0, 50)}..."`);
+          allResponses.push(geminiAnswer);
+          
+          // If this is the first response, use it as the initial answer
+          if (!answer) answer = geminiAnswer;
+        }
+      } catch (geminiError) {
+        console.error("Gemini API error:", geminiError);
+      }
+      
+      // Try Perplexity API
+      try {
+        const perplexityAnswer = await chatWithPerplexity(message, language);
+        if (perplexityAnswer) {
+          console.log(`Got Perplexity response: "${perplexityAnswer.substring(0, 50)}..."`);
+          allResponses.push(perplexityAnswer);
+          
+          // If this is the first response or the question is diabetes-related, prioritize Perplexity
+          if (!answer || isDiabetesQuestion) answer = perplexityAnswer;
+        }
       } catch (perplexityError) {
         console.error("Perplexity API error:", perplexityError);
-        
-        // Fallback to OpenAI if Perplexity fails
-        try {
-          console.log("Falling back to OpenAI for chat response");
-          const openAIAnswer = await chatWithOpenAI(message, language);
-          if (openAIAnswer) {
-            answer = openAIAnswer;
-            console.log(`Got OpenAI response: "${answer.substring(0, 50)}..."`);
-          } else {
-            throw new Error("Empty response from OpenAI");
-          }
-        } catch (openaiError) {
-          console.error("OpenAI API error:", openaiError);
-          // Default fallback message
-          answer = language === 'ar' 
-            ? "عذراً، حدث خطأ في معالجة طلبك. يرجى المحاولة مرة أخرى." 
-            : "Sorry, there was an error processing your request. Please try again.";
+      }
+      
+      // Try OpenAI API
+      try {
+        const openAIAnswer = await chatWithOpenAI(message, language);
+        if (openAIAnswer) {
+          console.log(`Got OpenAI response: "${openAIAnswer.substring(0, 50)}..."`);
+          allResponses.push(openAIAnswer);
+          
+          // If still no answer, use OpenAI's response
+          if (!answer) answer = openAIAnswer;
         }
+      } catch (openaiError) {
+        console.error("OpenAI API error:", openaiError);
+      }
+      
+      // If all APIs failed, use default response
+      if (!answer) {
+        answer = language === 'ar' 
+          ? "عذراً، حدث خطأ في معالجة طلبك. يرجى المحاولة مرة أخرى." 
+          : "Sorry, there was an error processing your request. Please try again.";
       }
       
       // Save bot response if authenticated

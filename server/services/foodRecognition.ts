@@ -1,10 +1,11 @@
 import { recognizeFoodWithPerplexity } from "./perplexity";
 import { recognizeFoodWithOpenAI } from "./openai";
+import { recognizeFoodWithGemini } from "./gemini";
 import { RecognizedFood } from "@shared/schema";
 import { storage } from "../storage";
 
 /**
- * Recognize food from an image buffer
+ * Recognize food from an image buffer using multiple AI models
  * @param imageBuffer Binary image data
  * @returns Promise with array of recognized foods
  */
@@ -13,31 +14,90 @@ export async function recognizeFood(imageBuffer: Buffer): Promise<RecognizedFood
     // Convert buffer to base64
     const base64Image = imageBuffer.toString("base64");
     
-    // Try to use Perplexity API first
+    // Store results from all APIs to combine later
+    let allRecognizedFoods: RecognizedFood[] = [];
+    let anyApiSucceeded = false;
+    
+    // Try Gemini API first (best at image analysis)
     try {
+      console.log("Attempting food recognition with Gemini API...");
+      const geminiFoods = await recognizeFoodWithGemini(base64Image);
+      
+      if (geminiFoods && geminiFoods.length > 0) {
+        console.log("Successfully recognized foods with Gemini:", geminiFoods);
+        allRecognizedFoods = [...allRecognizedFoods, ...geminiFoods];
+        anyApiSucceeded = true;
+      }
+    } catch (geminiError) {
+      console.error("Gemini API error:", geminiError);
+    }
+    
+    // Also try Perplexity API for additional insights
+    try {
+      console.log("Attempting food recognition with Perplexity API...");
       const perplexityFoods = await recognizeFoodWithPerplexity(base64Image);
       
-      // If Perplexity succeeded, return the results
       if (perplexityFoods && perplexityFoods.length > 0) {
         console.log("Successfully recognized foods with Perplexity:", perplexityFoods);
-        return perplexityFoods;
+        allRecognizedFoods = [...allRecognizedFoods, ...perplexityFoods];
+        anyApiSucceeded = true;
       }
     } catch (perplexityError) {
       console.error("Perplexity API error:", perplexityError);
-      // Continue to next approach (OpenAI)
     }
     
-    // Fallback to OpenAI if Perplexity failed
+    // Try OpenAI as another alternative
     try {
-      console.log("Falling back to OpenAI for food recognition");
+      console.log("Attempting food recognition with OpenAI API...");
       const openAIFoods = await recognizeFoodWithOpenAI(base64Image);
       
       if (openAIFoods && openAIFoods.length > 0) {
         console.log("Successfully recognized foods with OpenAI:", openAIFoods);
-        return openAIFoods;
+        allRecognizedFoods = [...allRecognizedFoods, ...openAIFoods];
+        anyApiSucceeded = true;
       }
     } catch (openAIError) {
       console.error("OpenAI API error:", openAIError);
+    }
+    
+    // Combine and deduplicate results if any API succeeded
+    if (anyApiSucceeded && allRecognizedFoods.length > 0) {
+      // Group similar items and calculate average confidence
+      const foodMap = new Map<string, {count: number, totalConfidence: number}>();
+      
+      // Group foods by name
+      allRecognizedFoods.forEach(food => {
+        const normalizedName = food.name.trim().toLowerCase();
+        if (foodMap.has(normalizedName)) {
+          const existing = foodMap.get(normalizedName)!;
+          existing.count += 1;
+          existing.totalConfidence += food.confidence;
+        } else {
+          foodMap.set(normalizedName, {count: 1, totalConfidence: food.confidence});
+        }
+      });
+      
+      // Convert back to array, calculating average confidence
+      const combinedFoods = Array.from(foodMap).map(([name, {count, totalConfidence}]) => {
+        // Find the original food with this name to preserve proper case
+        const originalFood = allRecognizedFoods.find(f => 
+          f.name.trim().toLowerCase() === name
+        );
+        
+        return {
+          name: originalFood?.name || name,
+          confidence: totalConfidence / count
+        };
+      });
+      
+      // Sort by confidence descending
+      combinedFoods.sort((a, b) => b.confidence - a.confidence);
+      
+      // Limit to top 5 foods
+      const topFoods = combinedFoods.slice(0, 5);
+      
+      console.log("Combined food recognition results:", topFoods);
+      return topFoods;
     }
     
     // If all API attempts fail, use sample data

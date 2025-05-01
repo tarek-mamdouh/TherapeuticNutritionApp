@@ -24,16 +24,16 @@ export async function chatWithOpenAI(query: string, language: string = 'ar'): Pr
     // Create system prompt with language instruction
     let systemPrompt = "You are a helpful nutrition assistant for diabetic patients. ";
     systemPrompt += "Provide accurate, evidence-based information about diet and nutrition for diabetic management. ";
-    systemPrompt += "Keep responses concise (max 3 paragraphs). ";
+    systemPrompt += "KEEP RESPONSES EXTREMELY BRIEF (1-3 SENTENCES ONLY). ";
     
     if (responseLanguage === 'ar') {
-      systemPrompt += "Always respond in fluent, grammatically correct Arabic. ";
+      systemPrompt += "Always respond in fluent, grammatically correct Arabic. Make responses very concise and direct. ";
     } else {
-      systemPrompt += "Always respond in fluent, grammatically correct English. ";
+      systemPrompt += "Always respond in fluent, grammatically correct English. Make responses very concise and direct. ";
     }
     
-    systemPrompt += "If you don't know the answer, say so rather than making up information. ";
-    systemPrompt += "Focus specifically on diabetic nutrition information.";
+    systemPrompt += "If you don't know the answer, say so briefly rather than making up information. ";
+    systemPrompt += "Focus specifically on diabetic nutrition information and keep all explanations extremely short.";
 
     // Make API call
     const response = await openai.chat.completions.create({

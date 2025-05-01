@@ -73,10 +73,29 @@ export function useSpeech() {
       return null;
     }
     
-    const langCode = language === 'ar' ? 'ar' : 'en';
+    // Set specific language codes for better matching
+    const langCode = language === 'ar' ? 'ar-SA' : 'en-US';
     
-    // Try to find a voice that matches the current language
-    const matchingVoices = voices.filter(voice => voice.lang.startsWith(langCode));
+    // Try to find voices that exactly match the language code
+    let matchingVoices = voices.filter(voice => voice.lang === langCode);
+    
+    // If no exact matches, try partial matches
+    if (matchingVoices.length === 0) {
+      matchingVoices = voices.filter(voice => voice.lang.startsWith(language));
+    }
+    
+    // Preferred voices by name (these are common high-quality voices)
+    const preferredVoiceNames = language === 'ar' 
+      ? ['Laila', 'Tarik', 'Maged', 'Amira'] // Arabic preferred voices
+      : ['Google UK English Female', 'Google US English', 'Samantha', 'Alex']; // English preferred voices
+    
+    // Try to find a preferred voice
+    for (const name of preferredVoiceNames) {
+      const preferredVoice = matchingVoices.find(voice => voice.name.includes(name));
+      if (preferredVoice) {
+        return preferredVoice;
+      }
+    }
     
     // Prefer native voice if available
     const nativeVoice = matchingVoices.find(voice => voice.localService);
@@ -89,7 +108,16 @@ export function useSpeech() {
       return matchingVoices[0];
     }
     
-    // If no matching voice, use default
+    // If no matching voice, use any available voice that partially matches the language
+    const fallbackVoices = voices.filter(voice => 
+      language === 'ar' ? voice.lang.includes('ar') : voice.lang.includes('en')
+    );
+    
+    if (fallbackVoices.length > 0) {
+      return fallbackVoices[0];
+    }
+    
+    // Absolute last resort - use default
     return voices[0];
   }, [voices, language]);
 
@@ -114,10 +142,18 @@ export function useSpeech() {
       utterance.voice = voice;
     }
     
-    // Set voice parameters
-    utterance.pitch = 1;
-    utterance.rate = 1;
+    // Set voice parameters with language-specific adjustments
     utterance.volume = 1;
+    
+    if (language === 'ar') {
+      // Arabic speech parameters
+      utterance.pitch = 1.05;  // Slightly higher pitch for Arabic
+      utterance.rate = 0.95;   // Slightly slower rate for Arabic
+    } else {
+      // English speech parameters
+      utterance.pitch = 1.0;   // Natural pitch for English
+      utterance.rate = 0.9;    // Slightly slower rate for clarity
+    }
     
     // Event handlers
     utterance.onstart = () => {

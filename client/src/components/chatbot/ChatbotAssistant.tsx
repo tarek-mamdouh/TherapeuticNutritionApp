@@ -194,7 +194,7 @@ const ChatbotAssistant: React.FC = () => {
     recognition.start();
   };
   
-  // Stop listening when button is released and send the message
+  // Stop listening when button is released but don't send the message automatically
   const stopRecording = () => {
     if (recognitionRef.current) {
       recognitionRef.current.stop();
@@ -206,12 +206,8 @@ const ChatbotAssistant: React.FC = () => {
       setRecordingTimer(null);
     }
     
-    // Send the message if there's input
-    if (input.trim() !== "") {
-      setTimeout(() => {
-        handleSendMessage();
-      }, 300);
-    }
+    // Don't send the message automatically
+    // User will need to click the Send button
   };
   
   return (

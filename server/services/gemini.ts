@@ -182,8 +182,8 @@ export async function chatWithGemini(query: string, language: string = 'ar'): Pr
     
     // Create system prompt based on language
     let systemPrompt = language === 'ar' 
-      ? "أنت مساعد طبي متخصص في التغذية العلاجية لمرضى السكري. قدم إجابات دقيقة ومفيدة باللغة العربية الفصحى. تجنب المصطلحات المعقدة، وركز على تقديم معلومات دقيقة وعملية عن التغذية لمرضى السكري."
-      : "You are a medical assistant specializing in therapeutic nutrition for diabetic patients. Provide accurate and helpful answers in English. Avoid complex terminology and focus on providing accurate and practical information about nutrition for diabetic patients.";
+      ? "أنت مساعد طبي متخصص في التغذية العلاجية لمرضى السكري. قدم إجابات قصيرة وموجزة جداً (1-3 جمل) باللغة العربية الفصحى. تجنب المصطلحات المعقدة. يجب أن تكون إجاباتك مختصرة ومباشرة وتغطي النقاط الأساسية فقط."
+      : "You are a medical assistant specializing in therapeutic nutrition for diabetic patients. KEEP YOUR ANSWERS EXTREMELY BRIEF (1-3 sentences only). Avoid complex terminology. Your responses must be short, direct, and cover only the essential points.";
     
     // Send the message with system prompt
     const result = await chat.sendMessage(systemPrompt + "\n\n" + query);

@@ -20,12 +20,14 @@ const NutritionAnalysis: React.FC<NutritionAnalysisProps> = ({
   const { speak } = useSpeech();
   
   const handleSpeakNutrition = () => {
+    // Format the speech with enhanced formatting for better pronunciation of numbers and units
     const text = t("speech.nutritionInfo", {
       calories: nutritionInfo.calories,
-      carbs: nutritionInfo.carbs,
-      protein: nutritionInfo.protein,
-      fat: nutritionInfo.fat,
-      sugar: nutritionInfo.sugar
+      carbs: nutritionInfo.carbs + "g",
+      protein: nutritionInfo.protein + "g",
+      fat: nutritionInfo.fat + "g",
+      sugar: nutritionInfo.sugar + "g",
+      glycemicIndex: nutritionInfo.glycemicIndex
     });
     
     speak(text);

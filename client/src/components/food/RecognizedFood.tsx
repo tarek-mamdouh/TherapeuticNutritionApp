@@ -52,8 +52,20 @@ const RecognizedFoodComponent: React.FC<RecognizedFoodProps> = ({
   const { speak } = useSpeech();
   
   const speakRecognizedFoods = () => {
+    // Join food names with proper commas and pauses for better pronunciation
     const foodNames = recognizedFoods.map(food => food.name).join(", ");
-    speak(t("speech.recognizedFoods", { foods: foodNames }));
+    
+    // Format the confidence percentages for better pronunciation
+    const foodWithConfidence = recognizedFoods.map(food => {
+      const confidencePercent = Math.round(food.confidence * 100);
+      return `${food.name}: ${confidencePercent}%`;
+    }).join(", ");
+    
+    // Create a comprehensive speech text with both food names and confidence
+    const text = t("speech.recognizedFoods", { foods: foodNames }) + 
+                 ". " + foodWithConfidence;
+    
+    speak(text);
   };
   
   return (

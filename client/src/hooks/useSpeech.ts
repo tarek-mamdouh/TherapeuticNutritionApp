@@ -37,6 +37,39 @@ const stripMarkdown = (text: string): string => {
   return cleanText;
 };
 
+// Format numbers for proper speech pronunciation
+const formatNumberForSpeech = (value: number, language: string): string => {
+  // Handle percentages
+  if (value >= 0 && value <= 100) {
+    if (language === 'ar') {
+      // Format for Arabic speech
+      // Convert 35% to "خمسة وثلاثون في المئة"
+      return `${value} في المئة`;
+    } else {
+      // Format for English speech
+      // Convert 35% to "thirty five percent"
+      return `${value} percent`;
+    }
+  }
+  
+  // Handle decimal numbers for more natural-sounding speech
+  if (value % 1 !== 0) {
+    const decimalPart = value.toString().split('.')[1];
+    if (decimalPart && decimalPart.length > 0) {
+      if (language === 'ar') {
+        // Arabic decimal format
+        return value.toString().replace('.', ' فاصلة ');
+      } else {
+        // English decimal format
+        return value.toString().replace('.', ' point ');
+      }
+    }
+  }
+  
+  // Return regular numbers as-is
+  return value.toString();
+};
+
 export function useSpeech() {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [speechSynthesis, setSpeechSynthesis] = useState<SpeechSynthesis | null>(null);
@@ -195,10 +228,38 @@ export function useSpeech() {
     }
   }, [speechSynthesis]);
 
+  const formatText = useCallback((text: string): string => {
+    // Format any numbers in the text for better speech pronunciation
+    // Look for number patterns followed by unit symbols or percentage
+    return text.replace(/(\d+(\.\d+)?)(%|g|كجم|mg|kg)/g, (match, number, decimal, unit) => {
+      const numValue = parseFloat(number);
+      
+      if (unit === '%' || unit === 'في المئة') {
+        return formatNumberForSpeech(numValue, language) + (language === 'ar' ? ' في المئة' : ' percent');
+      } else if (unit === 'g') {
+        return formatNumberForSpeech(numValue, language) + (language === 'ar' ? ' جرام' : ' grams');
+      } else if (unit === 'kg' || unit === 'كجم') {
+        return formatNumberForSpeech(numValue, language) + (language === 'ar' ? ' كيلوجرام' : ' kilograms');
+      } else if (unit === 'mg') {
+        return formatNumberForSpeech(numValue, language) + (language === 'ar' ? ' ملليجرام' : ' milligrams');
+      }
+      
+      return match;
+    });
+  }, [language]);
+
+  // Enhanced speak function that formats text properly for speech
+  const speakEnhanced = useCallback((text: string) => {
+    const cleanText = stripMarkdown(text);
+    const formattedText = formatText(cleanText);
+    speak(formattedText);
+  }, [speak, formatText]);
+
   return {
-    speak,
+    speak: speakEnhanced,
     cancelSpeech,
     isSpeaking,
     voices,
+    formatNumberForSpeech: (value: number) => formatNumberForSpeech(value, language)
   };
 }

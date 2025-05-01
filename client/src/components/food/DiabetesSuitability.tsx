@@ -24,9 +24,16 @@ const DiabetesSuitability: React.FC<DiabetesSuitabilityProps> = ({
   const { speak } = useSpeech();
   
   const handleSpeakSuitability = () => {
-    const text = t(`speech.suitability.${overall}`, {
+    // Get the description text for a more detailed speech
+    const description = t(`diabetesSuitability.description.${overall}`);
+    
+    // Prepare the initial speech text from the translation
+    const initialText = t(`speech.suitability.${overall}`, {
       foods: foods.map(food => food.name).join(", ")
     });
+    
+    // Combine both texts with a pause between them for better comprehension
+    const text = `${initialText} ${description}`;
     
     speak(text);
   };

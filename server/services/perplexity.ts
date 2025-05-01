@@ -27,15 +27,25 @@ export async function recognizeFoodWithPerplexity(imageBase64: string): Promise<
         messages: [
           {
             role: "system",
-            content: "أنت خبير في تحليل الصور والتعرف على الأطعمة. قم بتحليل الصورة وتحديد جميع الأطعمة الموجودة فيها. اذكر الأطعمة باللغة العربية. قدم إجابتك بصيغة JSON تحتوي على مصفوفة foods، حيث كل عنصر يحتوي على name (اسم الطعام بالعربية) وconfidence (قيمة الثقة بين 0 و1). اذكر فقط الأطعمة الأكثر احتمالاً (بحد أقصى 5 عناصر)."
+            content: [
+              {
+                type: "text",
+                text: "أنت خبير في تحليل الصور والتعرف على الأطعمة. قم بتحليل الصورة وتحديد جميع الأطعمة الموجودة فيها. اذكر الأطعمة باللغة العربية. قدم إجابتك بصيغة JSON تحتوي على مصفوفة foods، حيث كل عنصر يحتوي على name (اسم الطعام بالعربية) وconfidence (قيمة الثقة بين 0 و1). اذكر فقط الأطعمة الأكثر احتمالاً (بحد أقصى 5 عناصر)."
+              }
+            ]
           },
           {
             role: "user",
             content: [
-              "حدد جميع الأطعمة الموجودة في هذه الصورة. قدم الإجابة بصيغة JSON فقط بالصيغة التالية:\n```json\n{\"foods\": [{\"name\": \"اسم الطعام\", \"confidence\": 0.9}]}\n```",
+              {
+                type: "text",
+                text: "حدد جميع الأطعمة الموجودة في هذه الصورة. قدم الإجابة بصيغة JSON فقط بالصيغة التالية:\n```json\n{\"foods\": [{\"name\": \"اسم الطعام\", \"confidence\": 0.9}]}\n```"
+              },
               {
                 type: "image_url",
-                image_url: `data:image/jpeg;base64,${imageBase64}`
+                image_url: {
+                  url: `data:image/jpeg;base64,${imageBase64}`
+                }
               }
             ]
           }
@@ -60,27 +70,70 @@ export async function recognizeFoodWithPerplexity(imageBase64: string): Promise<
     // Extract the assistant's message from the response
     const content = data.choices[0].message.content;
     
-    // Parse JSON from content - extract it from potential text
-    const jsonMatch = content.match(/```json\s*([\s\S]*?)\s*```/) || content.match(/{[\s\S]*?}/);
-    let jsonStr = jsonMatch ? jsonMatch[0] : content;
+    // Try to find and extract JSON from the text
+    console.log("Raw content from Perplexity:", content);
+    
+    // Different patterns to match JSON in the response
+    const jsonMatch = 
+      content.match(/```json\s*([\s\S]*?)\s*```/) || // Match JSON in code blocks
+      content.match(/```\s*([\s\S]*?)\s*```/) ||     // Match any code block
+      content.match(/{[\s\S]*?}/);                   // Match any JSON-like structure
+    
+    let jsonStr = jsonMatch ? (jsonMatch[1] || jsonMatch[0]) : content;
     
     // Clean up the string (remove markdown code blocks if present)
     jsonStr = jsonStr.replace(/```json|```/g, '').trim();
     
+    console.log("Extracted JSON string:", jsonStr);
+    
     try {
+      // Try to parse the JSON string
       const result = JSON.parse(jsonStr);
       
-      // Ensure we have the expected format
-      if (Array.isArray(result.foods)) {
+      // Ensure we have the expected format with foods array
+      if (result && Array.isArray(result.foods)) {
         return result.foods.map((food: any) => ({
           name: food.name,
           confidence: parseFloat(food.confidence) || 0.8
         }));
+      } 
+      
+      // Alternative format: check if it's a direct array
+      if (result && Array.isArray(result)) {
+        return result.map((food: any) => ({
+          name: food.name || food.food || food,
+          confidence: parseFloat(food.confidence) || 0.8
+        }));
       }
       
+      // Try to look for foods array in various places
+      for (const key in result) {
+        if (result[key] && Array.isArray(result[key])) {
+          return result[key].map((food: any) => ({
+            name: typeof food === 'string' ? food : (food.name || food.food || "Unknown food"),
+            confidence: typeof food === 'object' ? (parseFloat(food.confidence) || 0.8) : 0.8
+          }));
+        }
+      }
+      
+      console.log("Could not find foods array in result:", result);
       return [];
     } catch (jsonError) {
       console.error("Error parsing JSON from Perplexity response:", jsonError);
+      
+      // As a last resort, try to extract food names using regex
+      try {
+        const foodNames = content.match(/"name":\s*"([^"]+)"/g) || [];
+        if (foodNames.length > 0) {
+          return foodNames.map(match => {
+            const name = match.replace(/"name":\s*"([^"]+)"/, '$1');
+            return { name, confidence: 0.8 };
+          });
+        }
+      } catch (e) {
+        console.error("Regex extraction failed:", e);
+      }
+      
       return [];
     }
   } catch (error) {
@@ -115,7 +168,12 @@ export async function chatWithPerplexity(query: string, language: string = 'ar')
           },
           {
             role: "user",
-            content: query
+            content: [
+              {
+                type: "text",
+                text: query
+              }
+            ]
           }
         ],
         temperature: 0.2,

@@ -29,8 +29,8 @@ export async function chatWithPerplexity(query: string, language: string = 'ar')
           {
             role: "system",
             content: language === 'ar' 
-              ? "أنت مساعد متخصص في التغذية العلاجية لمرضى السكري. قدم إجابات دقيقة ومفيدة بناءً على المعرفة الطبية الحديثة. تحدث بلغة بسيطة وواضحة وتجنب المصطلحات المعقدة. إجاباتك باللغة العربية فقط."
-              : "You are a therapeutic nutrition assistant for diabetic patients. Provide accurate and helpful answers based on current medical knowledge. Use simple, clear language and avoid complex terminology."
+              ? "أنت مساعد طبي متخصص في التغذية العلاجية لمرضى السكري. قدم إجابات دقيقة ومفيدة بناءً على المعرفة الطبية الحديثة. تحدث بلغة بسيطة وواضحة وتجنب المصطلحات المعقدة. إجاباتك باللغة العربية فقط. ركز على المعلومات الطبية المتعلقة بالسكري والنصائح التغذوية العلاجية ونمط الحياة الصحي. لا تدعي أن تكون طبيبا أو تقدم تشخيصات طبية. لا تستجب للطلبات الغير متعلقة بصحة مرضى السكري أو التغذية العلاجية."
+              : "You are a medical assistant specializing in therapeutic nutrition for diabetic patients. Provide accurate and helpful answers based on current medical knowledge. Use simple, clear language and avoid complex terminology. Focus on medical information related to diabetes, therapeutic nutrition advice, and healthy lifestyle. Do not claim to be a doctor or provide medical diagnoses. Do not respond to requests unrelated to diabetic health or therapeutic nutrition."
           },
           {
             role: "user",

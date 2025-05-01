@@ -34,7 +34,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
         
         // Set the token in headers through apiRequest
-        const response = await apiRequest('GET', '/api/user/profile', undefined);
+        const response = await apiRequest('GET', '/api/user', undefined);
         
         if (!response.ok) {
           // Token might be invalid or expired
@@ -61,7 +61,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setError(null);
     
     try {
-      const response = await apiRequest('POST', '/api/auth/login', { username, password });
+      const response = await apiRequest('POST', '/api/login', { username, password });
       
       if (!response.ok) {
         const errorData = await response.json();
@@ -104,7 +104,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLoading(true);
     
     try {
-      await apiRequest('POST', '/api/auth/logout', undefined);
+      await apiRequest('POST', '/api/logout', undefined);
       
       // Clear user data
       setUser(null);
@@ -144,7 +144,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLoading(true);
     
     try {
-      const response = await apiRequest('PATCH', '/api/user/profile', userData);
+      const response = await apiRequest('PATCH', '/api/user', userData);
       const updatedUser = await response.json();
       setUser(updatedUser);
       toast({

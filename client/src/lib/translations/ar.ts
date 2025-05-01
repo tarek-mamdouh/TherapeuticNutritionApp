@@ -117,7 +117,7 @@ const arTranslations = {
     error: "خطأ في التعرف الصوتي",
     errorDesc: "حدث خطأ أثناء التعرف الصوتي: {error}",
     recognizedFoods: "تم التعرف على الأطعمة التالية: {foods}",
-    nutritionInfo: "التحليل الغذائي للوجبة: {calories} سعرة حرارية، {carbs} جرام كربوهيدرات، {protein} جرام بروتين، {fat} جرام دهون، و {sugar} جرام سكر.",
+    nutritionInfo: "التحليل الغذائي للوجبة، تحتوي على: {calories} سعرة حرارية، و{carbs} جرام من الكربوهيدرات، و{protein} جرام من البروتين، و{fat} جرام من الدهون، و{sugar} جرام من السكر.",
     suitability: {
       safe: "هذه الوجبة المكونة من {foods} آمنة لمرضى السكري.",
       moderate: "هذه الوجبة المكونة من {foods} مناسبة بشكل معتدل لمرضى السكري. يرجى تناولها باعتدال.",
@@ -199,6 +199,7 @@ const arTranslations = {
     loginSuccessDesc: "مرحباً بعودتك، {name}!",
     loginError: "خطأ في تسجيل الدخول",
     loginErrorDesc: "فشل تسجيل الدخول. يرجى التحقق من اسم المستخدم وكلمة المرور.",
+    logout: "تسجيل الخروج",
     logoutSuccess: "تم تسجيل الخروج بنجاح",
     logoutError: "خطأ في تسجيل الخروج",
     notLoggedIn: "لم يتم تسجيل الدخول",

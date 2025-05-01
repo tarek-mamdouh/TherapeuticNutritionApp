@@ -4,16 +4,33 @@ import { useTheme } from "@/components/ThemeProvider";
 import { useUser } from "@/contexts/UserContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { ClipboardList, Moon, Sun } from "lucide-react";
+import { ClipboardList, LogOut, Moon, Sun } from "lucide-react";
 import { t } from "@/lib/i18n";
+import { useToast } from "@/hooks/use-toast";
 
 const Header: React.FC = () => {
   const { toggleLanguage, language } = useLanguage();
   const { theme, setTheme } = useTheme();
-  const { user } = useUser();
+  const { user, logout } = useUser();
+  const { toast } = useToast();
   
   const toggleTheme = () => {
     setTheme(theme === "light" ? "dark" : "light");
+  };
+  
+  const handleLogout = async () => {
+    try {
+      await logout();
+      toast({
+        title: t("user.logoutSuccess"),
+        variant: "default",
+      });
+    } catch (error) {
+      toast({
+        title: t("user.logoutError"),
+        variant: "destructive",
+      });
+    }
   };
   
   return (
@@ -48,6 +65,19 @@ const Header: React.FC = () => {
               {language === "ar" ? "EN" : "عربي"}
             </span>
           </Button>
+          
+          {user && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleLogout}
+              className="rounded-full hover:bg-primary-light accessibility-focus"
+              aria-label={t("user.logout")}
+              title={t("user.logout")}
+            >
+              <LogOut className="h-5 w-5" />
+            </Button>
+          )}
           
           <Avatar className="accessibility-focus h-10 w-10 border-2 border-white cursor-pointer">
             <AvatarImage src={user?.avatarUrl} alt={t("profile.userAvatar")} />

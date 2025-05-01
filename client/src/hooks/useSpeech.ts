@@ -146,13 +146,23 @@ export function useSpeech() {
     utterance.volume = 1;
     
     if (language === 'ar') {
-      // Arabic speech parameters
-      utterance.pitch = 1.05;  // Slightly higher pitch for Arabic
-      utterance.rate = 0.95;   // Slightly slower rate for Arabic
+      // Arabic speech parameters - improved for better pronunciation
+      utterance.pitch = 1.1;   // Higher pitch for clearer Arabic pronunciation
+      utterance.rate = 0.85;   // Slower rate for better articulation of Arabic words
     } else {
       // English speech parameters
       utterance.pitch = 1.0;   // Natural pitch for English
       utterance.rate = 0.9;    // Slightly slower rate for clarity
+    }
+    
+    // Pause briefly between phrases for better comprehension
+    const utteranceText = utterance.text;
+    if (utteranceText.includes(',') || utteranceText.includes('،') || utteranceText.includes('.') || utteranceText.includes('؟')) {
+      utterance.text = utteranceText
+        .replace(/,/g, ', ')
+        .replace(/،/g, '، ')
+        .replace(/\./g, '. ')
+        .replace(/؟/g, '؟ ');
     }
     
     // Event handlers

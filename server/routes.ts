@@ -115,20 +115,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // User login route
-  app.post("/api/auth/login", async (req, res) => {
+  app.post("/api/login", async (req, res) => {
     try {
-      // Validate the request using Zod schema
-      const loginData = userLoginSchema.parse(req.body);
+      console.log("Login request received:", JSON.stringify({...req.body, password: "******"}));
+      
+      // Get username and password from request
+      const { username, password } = req.body;
+      
+      // Basic validation
+      if (!username || !password) {
+        return res.status(400).json({ message: "Username and password are required" });
+      }
       
       // Find user by username
-      const user = await storage.getUserByUsername(loginData.username);
+      const user = await storage.getUserByUsername(username);
       if (!user) {
+        console.log(`User not found: ${username}`);
         return res.status(401).json({ message: "Invalid username or password" });
       }
       
       // Verify password
-      const isPasswordValid = await bcrypt.compare(loginData.password, user.password);
+      const isPasswordValid = await bcrypt.compare(password, user.password);
       if (!isPasswordValid) {
+        console.log(`Invalid password for user: ${username}`);
         return res.status(401).json({ message: "Invalid username or password" });
       }
       
@@ -140,7 +149,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       );
       
       // Return user data and token (excluding password)
-      const { password, ...userWithoutPassword } = user;
+      const { password: _, ...userWithoutPassword } = user;
       return res.status(200).json({
         user: userWithoutPassword,
         token
@@ -155,12 +164,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // User logout route (just for API consistency)
-  app.post("/api/auth/logout", (req, res) => {
+  app.post("/api/logout", (req, res) => {
     // JWT is stateless, so actual logout happens on client side by removing the token
     return res.status(200).json({ message: "Logged out successfully" });
   });
 
   // ===== User Profile Routes =====
+  // Get current user info
+  app.get("/api/user", authenticate, async (req: AuthenticatedRequest, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+      
+      const user = await storage.getUser(req.user.id);
+      
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // Return user data without password
+      const { password: _p1, ...userWithoutPassword } = user;
+      return res.status(200).json(userWithoutPassword);
+    } catch (error) {
+      console.error("Get user error:", error);
+      return res.status(500).json({ message: "Internal server error" });
+    }
+  });
+  
   app.get("/api/user/profile", authenticate, async (req: AuthenticatedRequest, res) => {
     try {
       if (!req.user) {
@@ -174,7 +205,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Return user data without password
-      const { password, ...userWithoutPassword } = user;
+      const { password: _p2, ...userWithoutPassword } = user;
       return res.status(200).json(userWithoutPassword);
     } catch (error) {
       console.error("Get profile error:", error);

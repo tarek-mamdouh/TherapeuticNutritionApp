@@ -2,6 +2,7 @@ import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { chatWithOpenAI } from "./services/openai";
+import { chatWithPerplexity } from "./services/perplexity";
 import { recognizeFood } from "./services/foodRecognition";
 import { getFoodNutrition, analyzeFoodSuitability } from "./services/nutritionDatabase";
 import multer from "multer";
@@ -500,13 +501,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      // Generate response from OpenAI with specified language preference
+      // Generate response from Perplexity API with specified language preference
       let answer;
       try {
-        answer = await chatWithOpenAI(message, language);
-        console.log(`Got OpenAI response: "${answer.substring(0, 50)}..."`);
+        answer = await chatWithPerplexity(message, language);
+        console.log(`Got Perplexity response: "${answer.substring(0, 50)}..."`);
       } catch (aiError) {
-        console.error("OpenAI chat error:", aiError);
+        console.error("Perplexity API error:", aiError);
         answer = language === 'ar' 
           ? "عذراً، حدث خطأ في معالجة طلبك. يرجى المحاولة مرة أخرى." 
           : "Sorry, there was an error processing your request. Please try again.";

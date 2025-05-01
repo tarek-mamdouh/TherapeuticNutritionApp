@@ -501,16 +501,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      // Generate response from Perplexity API with specified language preference
+      // Try to generate response from Perplexity API first, then fall back to OpenAI if needed
       let answer;
+      
+      // Try Perplexity API first
       try {
         answer = await chatWithPerplexity(message, language);
         console.log(`Got Perplexity response: "${answer.substring(0, 50)}..."`);
-      } catch (aiError) {
-        console.error("Perplexity API error:", aiError);
-        answer = language === 'ar' 
-          ? "عذراً، حدث خطأ في معالجة طلبك. يرجى المحاولة مرة أخرى." 
-          : "Sorry, there was an error processing your request. Please try again.";
+      } catch (perplexityError) {
+        console.error("Perplexity API error:", perplexityError);
+        
+        // Fallback to OpenAI if Perplexity fails
+        try {
+          console.log("Falling back to OpenAI for chat response");
+          const openAIAnswer = await chatWithOpenAI(message, language);
+          if (openAIAnswer) {
+            answer = openAIAnswer;
+            console.log(`Got OpenAI response: "${answer.substring(0, 50)}..."`);
+          } else {
+            throw new Error("Empty response from OpenAI");
+          }
+        } catch (openaiError) {
+          console.error("OpenAI API error:", openaiError);
+          // Default fallback message
+          answer = language === 'ar' 
+            ? "عذراً، حدث خطأ في معالجة طلبك. يرجى المحاولة مرة أخرى." 
+            : "Sorry, there was an error processing your request. Please try again.";
+        }
       }
       
       // Save bot response if authenticated

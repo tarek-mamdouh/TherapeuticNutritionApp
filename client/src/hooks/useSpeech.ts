@@ -2,6 +2,41 @@ import { useEffect, useState, useCallback } from 'react';
 import { useLanguage } from '@/hooks/useLanguage';
 import { useToast } from '@/hooks/use-toast';
 
+// Function to strip markdown from text for speech
+const stripMarkdown = (text: string): string => {
+  // Remove headers (#, ##, etc.)
+  let cleanText = text.replace(/#{1,6}\s+/g, '');
+  
+  // Remove bold/italic markers
+  cleanText = cleanText.replace(/(\*\*|__)(.*?)\1/g, '$2'); // Bold
+  cleanText = cleanText.replace(/(\*|_)(.*?)\1/g, '$2');    // Italic
+  
+  // Remove code blocks and inline code
+  cleanText = cleanText.replace(/```[\s\S]*?```/g, '');
+  cleanText = cleanText.replace(/`([^`]+)`/g, '$1');
+  
+  // Remove links but keep text
+  cleanText = cleanText.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
+  
+  // Remove bullet points and numbered lists
+  cleanText = cleanText.replace(/^\s*[-+*]\s+/gm, '');
+  cleanText = cleanText.replace(/^\s*\d+\.\s+/gm, '');
+  
+  // Remove blockquotes
+  cleanText = cleanText.replace(/^\s*>\s+/gm, '');
+  
+  // Remove horizontal rules
+  cleanText = cleanText.replace(/^\s*[-*_]{3,}\s*$/gm, '');
+  
+  // Remove HTML tags
+  cleanText = cleanText.replace(/<[^>]*>/g, '');
+  
+  // Replace multiple spaces and newlines with single ones
+  cleanText = cleanText.replace(/\s+/g, ' ').trim();
+  
+  return cleanText;
+};
+
 export function useSpeech() {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [speechSynthesis, setSpeechSynthesis] = useState<SpeechSynthesis | null>(null);
@@ -66,8 +101,11 @@ export function useSpeech() {
     // Cancel any ongoing speech
     speechSynthesis.cancel();
     
-    // Create new utterance
-    const utterance = new SpeechSynthesisUtterance(text);
+    // Strip markdown from text before speaking
+    const cleanText = stripMarkdown(text);
+    
+    // Create new utterance with clean text
+    const utterance = new SpeechSynthesisUtterance(cleanText);
     
     // Set language and voice
     utterance.lang = language === 'ar' ? 'ar-SA' : 'en-US';

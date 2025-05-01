@@ -8,6 +8,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useSpeech } from "@/hooks/useSpeech";
 import { useLanguage } from "@/hooks/useLanguage";
 import { ChatMessage } from "@shared/schema";
+import ReactMarkdown from "react-markdown";
 
 // Define the SpeechRecognition interfaces for TypeScript
 declare global {
@@ -189,7 +190,15 @@ const ChatbotAssistant: React.FC = () => {
                     ? "bg-neutral-medium dark:bg-gray-600 text-neutral-darkest dark:text-white rounded-tl-none" 
                     : "bg-primary text-white rounded-tr-none"
                 }`}>
-                  <p>{msg.message}</p>
+                  {msg.isUser ? (
+                    <p>{msg.message}</p>
+                  ) : (
+                    <div className="markdown-content">
+                      <ReactMarkdown>
+                        {msg.message}
+                      </ReactMarkdown>
+                    </div>
+                  )}
                 </div>
               </div>
             ))}

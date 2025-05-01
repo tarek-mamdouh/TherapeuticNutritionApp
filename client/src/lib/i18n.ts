@@ -1,7 +1,7 @@
 import { useContext } from 'react';
 import { LanguageContext } from '@/contexts/LanguageContext';
-import arTranslations from './translations/ar.json';
-import enTranslations from './translations/en.json';
+import arTranslations from './translations/ar';
+import enTranslations from './translations/en';
 
 type TranslationObject = {
   [key: string]: string | TranslationObject;

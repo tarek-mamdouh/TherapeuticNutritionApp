@@ -118,8 +118,8 @@ export default function AuthPage() {
           description: t("accountCreated"),
         });
         
-        // Auto-login after registration
-        await login(values.username, values.password);
+        // Auto-login after registration with special needs setting
+        await login(values.username, values.password, values.specialNeeds);
         navigate("/");
       } else {
         const errorData = await response.json();

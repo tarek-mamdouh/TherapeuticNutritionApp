@@ -6,6 +6,7 @@ import { chatWithPerplexity } from "./services/perplexity";
 import { chatWithGemini } from "./services/gemini";
 import { recognizeFood } from "./services/foodRecognition";
 import { getFoodNutrition, analyzeFoodSuitability } from "./services/nutritionDatabase";
+import { commonFoods } from "./data/commonFoods";
 import multer from "multer";
 import { FoodAnalysisResponse, insertChatMessageSchema, userSignupSchema, userLoginSchema, AuthResponse } from "@shared/schema";
 import { z } from "zod";
@@ -586,69 +587,19 @@ async function initializeSampleData() {
     const existingFoods = await storage.getAllFoods();
     
     if (existingFoods.length === 0) {
-      // Add sample foods
-      const foods = [
-        {
-          name: "أرز بسمتي",
-          nameEn: "Basmati Rice",
-          calories: 150,
-          carbs: 32,
-          protein: 3,
-          fat: 0,
-          sugar: 0,
-          glycemicIndex: 58,
-          diabeticSuitability: "moderate",
-          imageUrl: null
-        },
-        {
-          name: "خبز أسمر",
-          nameEn: "Whole Wheat Bread",
-          calories: 80,
-          carbs: 15,
-          protein: 4,
-          fat: 1,
-          sugar: 2,
-          glycemicIndex: 51,
-          diabeticSuitability: "moderate",
-          imageUrl: null
-        },
-        {
-          name: "تفاح",
-          nameEn: "Apple",
-          calories: 95,
-          carbs: 25,
-          protein: 0,
-          fat: 0,
-          sugar: 19,
-          glycemicIndex: 38,
-          diabeticSuitability: "moderate",
-          imageUrl: null
-        },
-        {
-          name: "صدر دجاج مشوي",
-          nameEn: "Grilled Chicken Breast",
-          calories: 165,
-          carbs: 0,
-          protein: 31,
-          fat: 3,
-          sugar: 0,
-          glycemicIndex: 0,
-          diabeticSuitability: "safe",
-          imageUrl: null
-        },
-        {
-          name: "خضروات مشكلة",
-          nameEn: "Mixed Vegetables",
-          calories: 65,
-          carbs: 13,
-          protein: 2,
-          fat: 0,
-          sugar: 4,
-          glycemicIndex: 15,
-          diabeticSuitability: "safe",
-          imageUrl: null
-        }
-      ];
+      // Add foods from our comprehensive database
+      const foods = commonFoods.map(food => ({
+        name: food.name,
+        nameEn: food.nameEn,
+        calories: food.calories,
+        carbs: food.carbs,
+        protein: food.protein,
+        fat: food.fat,
+        sugar: food.sugar,
+        glycemicIndex: food.glycemicIndex,
+        diabeticSuitability: food.diabeticSuitability,
+        imageUrl: null
+      }));
       
       for (const food of foods) {
         await storage.createFood(food);

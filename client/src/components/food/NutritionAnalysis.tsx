@@ -20,14 +20,29 @@ const NutritionAnalysis: React.FC<NutritionAnalysisProps> = ({
   const { speak } = useSpeech();
   
   const handleSpeakNutrition = () => {
-    // Simplified format with only essential information in the user's language
-    // Get the recognized foods and their percentages from context
-    const activeFoodName = document.querySelector('[role="region"] [data-active="true"] .text-lg')?.textContent || '';
+    // Calculate macro percentages for speech
+    const totalMacros = nutritionInfo.carbs + nutritionInfo.protein + nutritionInfo.fat;
+    const carbsPercent = Math.round((nutritionInfo.carbs / totalMacros) * 100) || 0;
+    const proteinPercent = Math.round((nutritionInfo.protein / totalMacros) * 100) || 0;
+    const fatPercent = Math.round((nutritionInfo.fat / totalMacros) * 100) || 0;
     
-    // Format simple speech with just food name and percentage
-    const simplifiedText = activeFoodName 
-      ? `${activeFoodName}, ${t("nutritionAnalysis.percentage", { value: "40" })}`
-      : t("nutritionAnalysis.title");
+    // Get main nutrient with highest percentage for speech
+    let mainNutrient = "";
+    let mainPercent = 0;
+    
+    if (carbsPercent > proteinPercent && carbsPercent > fatPercent) {
+      mainNutrient = t("nutritionAnalysis.carbs");
+      mainPercent = carbsPercent;
+    } else if (proteinPercent > carbsPercent && proteinPercent > fatPercent) {
+      mainNutrient = t("nutritionAnalysis.protein");
+      mainPercent = proteinPercent;
+    } else {
+      mainNutrient = t("nutritionAnalysis.fat");
+      mainPercent = fatPercent;
+    }
+    
+    // Construct a simple, concise speech text with just the main nutrient and percentage
+    const simplifiedText = `${mainNutrient}: ${mainPercent}%`;
     
     speak(simplifiedText);
   };

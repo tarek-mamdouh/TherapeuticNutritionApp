@@ -37,14 +37,51 @@ const MealLogPage: React.FC = () => {
   const fetchMealLogs = async () => {
     setIsLoading(true);
     try {
+      // Get logs from API
       const response = await apiRequest("GET", "/api/meal-logs", undefined);
-      const data = await response.json();
-      setLogs(data);
+      const serverData = await response.json();
+      
+      // Get any locally stored logs as backup
+      let localData = [];
+      try {
+        localData = JSON.parse(localStorage.getItem('savedMeals') || '[]');
+      } catch (e) {
+        console.error("Error parsing local logs:", e);
+        localStorage.setItem('savedMeals', '[]');
+      }
+      
+      // Combine logs from server and local storage
+      // Use server data as source of truth, but fill in with local data if needed
+      const allLogs = [...serverData];
+      
+      // Only add local data items that don't exist on server (based on timestamp/date)
+      if (localData.length > 0 && serverData.length === 0) {
+        // If no server data, use all local data
+        allLogs.push(...localData.map(localItem => ({
+          ...localItem,
+          id: localItem.id || Date.now(), // Ensure there's an ID
+          date: localItem.date || new Date().toISOString()
+        })));
+      }
+      
+      setLogs(allLogs);
       
       // Process weekly data for charts
-      processWeeklyData(data);
+      processWeeklyData(allLogs);
     } catch (error) {
       console.error("Error fetching meal logs:", error);
+      
+      // Fallback to localStorage if API fails
+      try {
+        const localData = JSON.parse(localStorage.getItem('savedMeals') || '[]');
+        if (localData.length > 0) {
+          setLogs(localData);
+          processWeeklyData(localData);
+        }
+      } catch (e) {
+        console.error("Error parsing local logs:", e);
+      }
+      
       toast({
         title: t("mealLog.fetchError"),
         description: t("mealLog.fetchErrorDesc"),
@@ -98,7 +135,17 @@ const MealLogPage: React.FC = () => {
   
   const handleDeleteLog = async (logId: number) => {
     try {
+      // Delete from server API
       await apiRequest("DELETE", `/api/meal-logs/${logId}`, undefined);
+      
+      // Also remove from localStorage if present
+      try {
+        const savedMeals = JSON.parse(localStorage.getItem('savedMeals') || '[]');
+        const updatedMeals = savedMeals.filter(meal => meal.id !== logId);
+        localStorage.setItem('savedMeals', JSON.stringify(updatedMeals));
+      } catch (e) {
+        console.error("Error updating local storage:", e);
+      }
       
       // Remove from local state
       setLogs(prev => prev.filter(log => log.id !== logId));
@@ -112,6 +159,21 @@ const MealLogPage: React.FC = () => {
       processWeeklyData(logs.filter(log => log.id !== logId));
     } catch (error) {
       console.error("Error deleting meal log:", error);
+      
+      // Try to remove from local storage even if API fails
+      try {
+        const savedMeals = JSON.parse(localStorage.getItem('savedMeals') || '[]');
+        const updatedMeals = savedMeals.filter(meal => meal.id !== logId);
+        localStorage.setItem('savedMeals', JSON.stringify(updatedMeals));
+        
+        // Update UI
+        setLogs(prev => prev.filter(log => log.id !== logId));
+        processWeeklyData(logs.filter(log => log.id !== logId));
+        
+      } catch (e) {
+        console.error("Error updating local storage:", e);
+      }
+      
       toast({
         title: t("mealLog.deleteError"),
         description: t("mealLog.deleteErrorDesc"),

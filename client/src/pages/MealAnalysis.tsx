@@ -142,13 +142,26 @@ const MealAnalysis: React.FC = () => {
 
   const handleSaveToLog = async () => {
     try {
-      await apiRequest("POST", "/api/meal-log", {
+      // Save to backend API
+      const response = await apiRequest("POST", "/api/meal-logs", {
         foods: recognizedFoods.map(food => ({
           foodId: food.id,
-          amount: 100 // Default amount in grams
+          amount: 100, // Default amount in grams
+          notes: null
         }))
       });
       
+      // Also save to localStorage as a backup
+      const savedMeals = JSON.parse(localStorage.getItem('savedMeals') || '[]');
+      const newMeal = {
+        id: Date.now(), // Use timestamp as temporary ID
+        foods: recognizedFoods,
+        date: new Date().toISOString(),
+        nutritionInfo: nutritionInfo
+      };
+      localStorage.setItem('savedMeals', JSON.stringify([...savedMeals, newMeal]));
+      
+      // Show success message
       toast({
         title: t("mealAnalysis.savedToLog"),
         description: t("mealAnalysis.savedToLogDesc")

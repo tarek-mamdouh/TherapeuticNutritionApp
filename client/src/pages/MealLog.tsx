@@ -92,7 +92,7 @@ const MealLogPage: React.FC = () => {
     }
   };
   
-  const processWeeklyData = (logData: MealLogWithFood[]) => {
+  const processWeeklyData = (logData: any[]) => {
     // Get dates for the last 7 days
     const days = Array.from({ length: 7 }, (_, i) => {
       const date = new Date();
@@ -110,16 +110,42 @@ const MealLogPage: React.FC = () => {
     
     // Sum up nutritional values for each day
     logData.forEach(log => {
-      const logDate = new Date(log.date);
-      const logDateStr = format(logDate, "yyyy-MM-dd");
-      
-      const dayIndex = days.findIndex(d => d.dayFull === logDateStr);
-      if (dayIndex >= 0) {
-        const amount = log.amount / 100; // Convert amount to percentage (100g base)
-        days[dayIndex].calories += log.food.calories * amount;
-        days[dayIndex].carbs += log.food.carbs * amount;
-        days[dayIndex].protein += log.food.protein * amount;
-        days[dayIndex].sugar += log.food.sugar * amount;
+      try {
+        // Skip invalid logs
+        if (!log) return;
+        
+        // Handle date safely
+        const logDate = log.date ? new Date(log.date) : new Date();
+        const logDateStr = format(logDate, "yyyy-MM-dd");
+        
+        const dayIndex = days.findIndex(d => d.dayFull === logDateStr);
+        if (dayIndex < 0) return; // Skip if not in our week range
+        
+        // Handle different data structures based on source
+        if (log.food) {
+          // Standard API structure
+          const amount = (log.amount || 100) / 100; // Default to 100g if missing
+          days[dayIndex].calories += (log.food.calories || 0) * amount;
+          days[dayIndex].carbs += (log.food.carbs || 0) * amount;
+          days[dayIndex].protein += (log.food.protein || 0) * amount;
+          days[dayIndex].sugar += (log.food.sugar || 0) * amount;
+        } else if (log.foods && Array.isArray(log.foods)) {
+          // Handle local storage structure with array of foods
+          log.foods.forEach((foodItem: any) => {
+            days[dayIndex].calories += foodItem.calories || 0;
+            days[dayIndex].carbs += foodItem.carbs || 0;
+            days[dayIndex].protein += foodItem.protein || 0;
+            days[dayIndex].sugar += foodItem.sugar || 0;
+          });
+        } else if (log.nutritionInfo) {
+          // Handle structure with direct nutritionInfo object
+          days[dayIndex].calories += log.nutritionInfo.calories || 0;
+          days[dayIndex].carbs += log.nutritionInfo.carbs || 0;
+          days[dayIndex].protein += log.nutritionInfo.protein || 0;
+          days[dayIndex].sugar += log.nutritionInfo.sugar || 0;
+        }
+      } catch (err) {
+        console.error("Error processing log:", err);
       }
     });
     
@@ -183,14 +209,20 @@ const MealLogPage: React.FC = () => {
   };
   
   const groupLogsByDate = () => {
-    const grouped: { [date: string]: MealLogWithFood[] } = {};
+    const grouped: { [date: string]: any[] } = {};
     
     logs.forEach(log => {
-      const date = format(new Date(log.date), "yyyy-MM-dd");
-      if (!grouped[date]) {
-        grouped[date] = [];
+      if (!log || !log.date) return;
+      
+      try {
+        const date = format(new Date(log.date), "yyyy-MM-dd");
+        if (!grouped[date]) {
+          grouped[date] = [];
+        }
+        grouped[date].push(log);
+      } catch (err) {
+        console.error("Error grouping log:", err);
       }
-      grouped[date].push(log);
     });
     
     return Object.entries(grouped)
@@ -286,35 +318,64 @@ const MealLogPage: React.FC = () => {
                     </div>
                     
                     <div className="divide-y divide-neutral-medium dark:divide-gray-600">
-                      {logs.map(log => (
-                        <div key={log.id} className="p-4 flex justify-between items-center">
-                          <div>
-                            <p className="font-medium">{log.food.name}</p>
-                            <div className="text-sm text-neutral-dark flex items-center mt-1">
-                              <Clock className="h-4 w-4 mr-1" />
-                              {format(new Date(log.date), "p")}
-                            </div>
-                          </div>
-                          
-                          <div className="flex items-center">
-                            <div className="text-right mr-4">
-                              <p className="font-bold">{log.food.calories} {t("nutritionAnalysis.calories")}</p>
-                              <p className="text-sm text-neutral-dark">
-                                {log.food.carbs}g {t("nutritionAnalysis.carbs")} • {log.food.protein}g {t("nutritionAnalysis.protein")}
-                              </p>
+                      {logs.map(log => {
+                        // Determine the food name and nutrition info based on data structure
+                        let foodName = "Unknown Food";
+                        let calories = 0;
+                        let carbs = 0;
+                        let protein = 0;
+                        
+                        if (log.food) {
+                          // API data structure
+                          foodName = log.food.name || "Unknown Food";
+                          calories = log.food.calories || 0;
+                          carbs = log.food.carbs || 0;
+                          protein = log.food.protein || 0;
+                        } else if (log.foods && Array.isArray(log.foods) && log.foods.length > 0) {
+                          // Local storage structure with foods array
+                          const mainFood = log.foods[0];
+                          foodName = mainFood.name || "Mixed Foods";
+                          calories = log.foods.reduce((sum, f) => sum + (f.calories || 0), 0);
+                          carbs = log.foods.reduce((sum, f) => sum + (f.carbs || 0), 0);
+                          protein = log.foods.reduce((sum, f) => sum + (f.protein || 0), 0);
+                        } else if (log.nutritionInfo) {
+                          // Direct nutrition info structure
+                          foodName = log.mealName || "Meal";
+                          calories = log.nutritionInfo.calories || 0;
+                          carbs = log.nutritionInfo.carbs || 0;
+                          protein = log.nutritionInfo.protein || 0;
+                        }
+                        
+                        return (
+                          <div key={log.id} className="p-4 flex justify-between items-center">
+                            <div>
+                              <p className="font-medium">{foodName}</p>
+                              <div className="text-sm text-neutral-dark flex items-center mt-1">
+                                <Clock className="h-4 w-4 mr-1" />
+                                {format(new Date(log.date), "p")}
+                              </div>
                             </div>
                             
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => handleDeleteLog(log.id)}
-                              className="text-error hover:bg-error/10 rounded-full"
-                            >
-                              <Trash2 className="h-5 w-5" />
-                            </Button>
+                            <div className="flex items-center">
+                              <div className="text-right mr-4">
+                                <p className="font-bold">{calories} {t("nutritionAnalysis.calories")}</p>
+                                <p className="text-sm text-neutral-dark">
+                                  {carbs}g {t("nutritionAnalysis.carbs")} • {protein}g {t("nutritionAnalysis.protein")}
+                                </p>
+                              </div>
+                              
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleDeleteLog(log.id)}
+                                className="text-error hover:bg-error/10 rounded-full"
+                              >
+                                <Trash2 className="h-5 w-5" />
+                              </Button>
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   </div>
                 ))}

@@ -20,30 +20,53 @@ const NutritionAnalysis: React.FC<NutritionAnalysisProps> = ({
   const { speak } = useSpeech();
   
   const handleSpeakNutrition = () => {
-    // Calculate macro percentages for speech
-    const totalMacros = nutritionInfo.carbs + nutritionInfo.protein + nutritionInfo.fat;
-    const carbsPercent = Math.round((nutritionInfo.carbs / totalMacros) * 100) || 0;
-    const proteinPercent = Math.round((nutritionInfo.protein / totalMacros) * 100) || 0;
-    const fatPercent = Math.round((nutritionInfo.fat / totalMacros) * 100) || 0;
+    // Speak only the actual nutrient value with its unit
+    // For example "Carbs: 24g" instead of a percentage
     
-    // Get main nutrient with highest percentage for speech
-    let mainNutrient = "";
-    let mainPercent = 0;
+    // Get the clicked element's nutrient type
+    const activeElement = document.activeElement;
+    const activeNutrientElement = activeElement?.closest('[role="group"]');
     
-    if (carbsPercent > proteinPercent && carbsPercent > fatPercent) {
-      mainNutrient = t("nutritionAnalysis.carbs");
-      mainPercent = carbsPercent;
-    } else if (proteinPercent > carbsPercent && proteinPercent > fatPercent) {
-      mainNutrient = t("nutritionAnalysis.protein");
-      mainPercent = proteinPercent;
-    } else {
-      mainNutrient = t("nutritionAnalysis.fat");
-      mainPercent = fatPercent;
+    // Default to carbs if no element is actively focused
+    let nutrientType = "carbs";
+    let nutrientValue = nutritionInfo.carbs;
+    let unit = "g"; // default unit
+    
+    // If an element is focused, get its nutrient type
+    if (activeNutrientElement) {
+      const label = activeNutrientElement.getAttribute('aria-label') || '';
+      
+      // Determine which nutrient is active based on the label
+      if (label.includes(t("nutritionAnalysis.calories"))) {
+        nutrientType = "calories";
+        nutrientValue = nutritionInfo.calories;
+        unit = ""; // no unit for calories
+      } else if (label.includes(t("nutritionAnalysis.carbs"))) {
+        nutrientType = "carbs";
+        nutrientValue = nutritionInfo.carbs;
+      } else if (label.includes(t("nutritionAnalysis.protein"))) {
+        nutrientType = "protein";
+        nutrientValue = nutritionInfo.protein;
+      } else if (label.includes(t("nutritionAnalysis.fat"))) {
+        nutrientType = "fat";
+        nutrientValue = nutritionInfo.fat;
+      } else if (label.includes(t("nutritionAnalysis.sugar"))) {
+        nutrientType = "sugar";
+        nutrientValue = nutritionInfo.sugar;
+      } else if (label.includes(t("nutritionAnalysis.glycemicIndex"))) {
+        nutrientType = "glycemicIndex";
+        nutrientValue = nutritionInfo.glycemicIndex;
+        unit = ""; // no unit for glycemic index
+      }
     }
     
-    // Construct a simple, concise speech text with just the main nutrient and percentage
-    const simplifiedText = `${mainNutrient}: ${mainPercent}%`;
+    // Get the translated nutrient name
+    const nutrientName = t(`nutritionAnalysis.${nutrientType}`);
     
+    // Construct the simple speech text with just the nutrient and its actual value
+    const simplifiedText = `${nutrientName}: ${nutrientValue}${unit}`;
+    
+    // Speak only when the button is clicked
     speak(simplifiedText);
   };
   

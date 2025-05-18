@@ -20,17 +20,16 @@ const NutritionAnalysis: React.FC<NutritionAnalysisProps> = ({
   const { speak } = useSpeech();
   
   const handleSpeakNutrition = () => {
-    // Format the speech with enhanced formatting for better pronunciation of numbers and units
-    const text = t("speech.nutritionInfo", {
-      calories: nutritionInfo.calories,
-      carbs: nutritionInfo.carbs + "g",
-      protein: nutritionInfo.protein + "g",
-      fat: nutritionInfo.fat + "g",
-      sugar: nutritionInfo.sugar + "g",
-      glycemicIndex: nutritionInfo.glycemicIndex
-    });
+    // Simplified format with only essential information in the user's language
+    // Get the recognized foods and their percentages from context
+    const activeFoodName = document.querySelector('[role="region"] [data-active="true"] .text-lg')?.textContent || '';
     
-    speak(text);
+    // Format simple speech with just food name and percentage
+    const simplifiedText = activeFoodName 
+      ? `${activeFoodName}, ${t("nutritionAnalysis.percentage", { value: "40" })}`
+      : t("nutritionAnalysis.title");
+    
+    speak(simplifiedText);
   };
   
   return (

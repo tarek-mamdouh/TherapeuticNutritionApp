@@ -78,7 +78,8 @@ const arTranslations = {
     protein: "البروتين",
     fat: "الدهون",
     sugar: "السكر",
-    glycemicIndex: "المؤشر الجلايسيمي"
+    glycemicIndex: "المؤشر الجلايسيمي",
+    percentage: "{value}٪"
   },
   diabetesSuitability: {
     title: "مدى ملاءمة الوجبة لمرضى السكري",

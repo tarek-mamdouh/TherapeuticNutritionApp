@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useLanguage } from '@/hooks/useLanguage';
 import { useToast } from '@/hooks/use-toast';
 
@@ -70,12 +70,13 @@ const formatNumberForSpeech = (value: number, language: string): string => {
   return value.toString();
 };
 
-export function useSpeech() {
+export function useSpeech(autoRead: boolean = false) {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [speechSynthesis, setSpeechSynthesis] = useState<SpeechSynthesis | null>(null);
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
   const { language } = useLanguage();
   const { toast } = useToast();
+  const observerRef = useRef<MutationObserver | null>(null);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -255,11 +256,132 @@ export function useSpeech() {
     speak(formattedText);
   }, [speak, formatText]);
 
+  // Function to extract readable text from an element
+  const getReadableText = useCallback((element: HTMLElement): string => {
+    // Skip hidden elements
+    if (element.offsetParent === null) {
+      return '';
+    }
+    
+    // Get element's accessible name based on ARIA attributes
+    if (element.hasAttribute('aria-label')) {
+      return element.getAttribute('aria-label') || '';
+    }
+    
+    // For elements with role=group, try to get label from aria-labelledby
+    if (element.getAttribute('role') === 'group' && element.hasAttribute('aria-labelledby')) {
+      const labelId = element.getAttribute('aria-labelledby');
+      const labelElement = document.getElementById(labelId || '');
+      if (labelElement) {
+        return labelElement.textContent || '';
+      }
+    }
+    
+    // Check if it's a heading (h1-h6)
+    if (/^h[1-6]$/i.test(element.tagName)) {
+      return element.textContent || '';
+    }
+    
+    // Get text from certain input elements
+    if (element.tagName === 'INPUT') {
+      const inputElement = element as HTMLInputElement;
+      if (inputElement.type === 'submit' || inputElement.type === 'button') {
+        return inputElement.value || '';
+      }
+    }
+    
+    // For other elements, return empty
+    return '';
+  }, []);
+
+  // Automatically read page content when it changes (for special needs users)
+  useEffect(() => {
+    if (!autoRead || !speechSynthesis) {
+      return;
+    }
+    
+    // Function to read the main content area
+    const readMainContent = () => {
+      // Find the main content area - typically inside a main tag or an element with role="main"
+      const mainElement = document.querySelector('main') || document.querySelector('[role="main"]');
+      
+      if (!mainElement) {
+        return;
+      }
+      
+      // Find important headings and landmarks
+      const headings = mainElement.querySelectorAll('h1, h2, h3');
+      const landmarks = mainElement.querySelectorAll('[role="region"], [role="navigation"], [aria-labelledby]');
+      
+      let textToRead = '';
+      
+      // Add headings text
+      headings.forEach((heading) => {
+        if (heading.textContent) {
+          textToRead += heading.textContent + '. ';
+        }
+      });
+      
+      // Add landmark descriptions
+      landmarks.forEach((landmark) => {
+        const landmarkText = getReadableText(landmark as HTMLElement);
+        if (landmarkText) {
+          textToRead += landmarkText + '. ';
+        }
+      });
+      
+      // If text was found, speak it
+      if (textToRead) {
+        speakEnhanced(textToRead);
+      }
+    };
+    
+    // Set up the observer for content changes
+    if (typeof MutationObserver !== 'undefined') {
+      // Disconnect any existing observer
+      if (observerRef.current) {
+        observerRef.current.disconnect();
+      }
+      
+      // Create a new observer
+      observerRef.current = new MutationObserver((mutations) => {
+        // Check if significant changes occurred (new nodes added)
+        const significantChange = mutations.some(mutation => 
+          mutation.type === 'childList' && mutation.addedNodes.length > 0
+        );
+        
+        if (significantChange) {
+          // Small delay to allow DOM to fully update
+          setTimeout(readMainContent, 500);
+        }
+      });
+      
+      // Start observing the document
+      observerRef.current.observe(document.body, {
+        childList: true,
+        subtree: true,
+        attributes: false,
+        characterData: false
+      });
+      
+      // Initial read after page loads
+      setTimeout(readMainContent, 1000);
+    }
+    
+    return () => {
+      // Disconnect observer on cleanup
+      if (observerRef.current) {
+        observerRef.current.disconnect();
+      }
+    };
+  }, [autoRead, speechSynthesis, speakEnhanced, getReadableText]);
+
   return {
     speak: speakEnhanced,
     cancelSpeech,
     isSpeaking,
     voices,
-    formatNumberForSpeech: (value: number) => formatNumberForSpeech(value, language)
+    formatNumberForSpeech: (value: number) => formatNumberForSpeech(value, language),
+    autoRead
   };
 }

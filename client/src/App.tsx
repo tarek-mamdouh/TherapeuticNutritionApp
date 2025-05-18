@@ -14,6 +14,7 @@ import { useLanguage } from "@/hooks/useLanguage";
 import { useEffect } from "react";
 import { UserProvider } from "@/contexts/UserContext";
 import Layout from "@/components/Layout";
+import AccessibilityReader from "@/components/AccessibilityReader";
 
 function AppContent() {
   const [location] = useLocation();
@@ -56,7 +57,9 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <UserProvider>
-          <AppContent />
+          <AccessibilityReader>
+            <AppContent />
+          </AccessibilityReader>
         </UserProvider>
       </TooltipProvider>
     </QueryClientProvider>

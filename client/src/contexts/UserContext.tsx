@@ -8,9 +8,11 @@ interface UserContextType {
   user: User | null;
   isLoading: boolean;
   error: string | null;
-  login: (username: string, password: string) => Promise<boolean>;
+  hasSpecialNeeds: boolean;
+  login: (username: string, password: string, specialNeeds?: boolean) => Promise<boolean>;
   logout: () => void;
   updateUser: (userData: Partial<User>) => Promise<boolean>;
+  setHasSpecialNeeds: (value: boolean) => void;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -19,6 +21,9 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [hasSpecialNeeds, setHasSpecialNeeds] = useState<boolean>(
+    localStorage.getItem('specialNeeds') === 'true'
+  );
   const { toast } = useToast();
 
   useEffect(() => {
@@ -56,7 +61,16 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     fetchUser();
   }, []);
 
-  const login = async (username: string, password: string): Promise<boolean> => {
+  // Save special needs preference to localStorage
+  useEffect(() => {
+    localStorage.setItem('specialNeeds', hasSpecialNeeds.toString());
+  }, [hasSpecialNeeds]);
+
+  const login = async (username: string, password: string, specialNeeds?: boolean): Promise<boolean> => {
+    // Update special needs if provided during login
+    if (specialNeeds !== undefined) {
+      setHasSpecialNeeds(specialNeeds);
+    }
     setIsLoading(true);
     setError(null);
     
@@ -167,7 +181,16 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <UserContext.Provider value={{ user, isLoading, error, login, logout, updateUser }}>
+    <UserContext.Provider value={{ 
+      user, 
+      isLoading, 
+      error, 
+      hasSpecialNeeds,
+      login, 
+      logout, 
+      updateUser,
+      setHasSpecialNeeds
+    }}>
       {children}
     </UserContext.Provider>
   );

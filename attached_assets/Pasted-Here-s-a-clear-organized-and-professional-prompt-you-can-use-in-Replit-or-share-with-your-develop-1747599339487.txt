@@ -1,0 +1,102 @@
+Here's a clear, organized, and professional prompt you can use in Replit (or share with your developer/team) to guide the implementation of all your requested features and fixes:
+
+---
+
+### 🛠️ Replit Development Request: Application Fixes & Feature Enhancements
+
+Please address the following issues and feature requests in our application, organized by section:
+
+---
+
+#### **1. UI Enhancement on Login Page**
+
+Ensure that the following block of code appears inline with the rest of the user experience on the login page. This section introduces the app title, description, and features:
+
+```tsx
+<div data-replit-metadata="client/src/pages/auth-page.tsx:323:8" data-component-name="div" class="flex flex-1 flex-col items-center justify-center bg-primary text-primary-foreground p-6 md:w-1/2">
+  <div class="text-center max-w-lg">
+    <h1 class="text-3xl font-bold mb-4">appTitle</h1>
+    <p class="text-xl mb-6">appDescription</p>
+    <div class="space-y-4">
+      <div class="flex items-center space-x-2">
+        <div class="bg-primary-foreground text-primary w-8 h-8 rounded-full flex items-center justify-center">1</div>
+        <p>feature1</p>
+      </div>
+      <div class="flex items-center space-x-2">
+        <div class="bg-primary-foreground text-primary w-8 h-8 rounded-full flex items-center justify-center">2</div>
+        <p>feature2</p>
+      </div>
+      <div class="flex items-center space-x-2">
+        <div class="bg-primary-foreground text-primary w-8 h-8 rounded-full flex items-center justify-center">3</div>
+        <p>feature3</p>
+      </div>
+    </div>
+  </div>
+</div>
+```
+
+This section should display cleanly, consistently, and responsively across devices.
+
+---
+
+#### **2. Manual Meal Entry Section**
+
+Please populate this section with **the 100 most popular and widely known meals**, making them accessible for quick manual entry. Use standard naming conventions and categorize where applicable (e.g., grains, proteins, vegetables).
+
+---
+
+#### **3. Audio Pronunciation Logic (Meal Analysis)**
+
+The current audio output includes the ingredient name in Arabic and English **but excludes calorie and percentage information**, which is incorrect.
+
+🔄 **Update logic as follows:**
+
+* Only pronounce: **ingredient name + its percentage**
+* Omit: calories or repeated dual-language naming unless essential
+
+---
+
+#### **4. Meal Log Functionality**
+
+The **meal log is currently not saving meals correctly** or functioning as expected.
+
+✅ Please fix this functionality so that:
+
+* Meals added are logged reliably
+* Entries persist across sessions
+* Users can view, edit, or delete logged meals
+
+---
+
+#### **5. Meal Component Analysis Accuracy**
+
+Meal component analysis (e.g., for items like carrots or rice) currently outputs **a single, repeated sentence**, making results unreliable.
+
+🎯 Update analysis logic to:
+
+* Reflect unique, detailed nutrition insights per ingredient
+* Vary sentence structure and content to enhance readability and accuracy
+
+---
+
+#### **6. Feature Additions**
+
+✅ **A. Chat Log Panel**
+
+* Implement a **chat history** section where users can view previous interactions and analysis results.
+
+✅ **B. Special Needs Audio Option**
+
+* On the **registration page**, add a toggle or checkbox:
+
+  * Label: **"Do you have special needs?"**
+  * If selected:
+
+    * Automatically enable full audio feedback during meal analysis
+  * If not selected:
+
+    * Audio is **only played when the user clicks** a “Pronounce” button
+
+---
+
+Let me know if you need the prompt translated into Arabic or formatted as a GitHub issue/ticket.

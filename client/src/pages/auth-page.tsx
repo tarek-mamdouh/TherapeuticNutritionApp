@@ -35,6 +35,7 @@ const registerSchema = z.object({
   password: z.string().min(6, "Password must be at least 6 characters"),
   name: z.string().optional(),
   language: z.enum(["ar", "en"]).default("ar"),
+  specialNeeds: z.boolean().default(false),
 });
 
 type LoginFormValues = z.infer<typeof loginSchema>;
@@ -71,6 +72,7 @@ export default function AuthPage() {
       password: "",
       name: "",
       language: "ar",
+      specialNeeds: false,
     },
   });
 
@@ -278,7 +280,7 @@ export default function AuthPage() {
                           render={({ field }) => (
                             <FormItem>
                               <FormLabel>{t("preferredLanguage")}</FormLabel>
-                              <div className="flex space-x-4">
+                              <div className="flex space-x-4 rtl:space-x-reverse">
                                 <Button
                                   type="button"
                                   variant={field.value === "ar" ? "default" : "outline"}
@@ -297,6 +299,28 @@ export default function AuthPage() {
                                 </Button>
                               </div>
                               <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={registerForm.control}
+                          name="specialNeeds"
+                          render={({ field }) => (
+                            <FormItem className="flex flex-row items-start space-x-3 space-y-0 rtl:space-x-reverse p-4 border rounded-md bg-muted/30">
+                              <FormControl>
+                                <div className="flex items-center space-x-2 rtl:space-x-reverse">
+                                  <input
+                                    type="checkbox"
+                                    checked={field.value}
+                                    onChange={(e) => field.onChange(e.target.checked)}
+                                    className="w-4 h-4"
+                                  />
+                                  <FormLabel className="m-0">{t("auth.specialNeeds")}</FormLabel>
+                                </div>
+                              </FormControl>
+                              <div className="text-sm text-muted-foreground">
+                                {t("auth.enableFullAudio")}
+                              </div>
                             </FormItem>
                           )}
                         />
@@ -322,26 +346,26 @@ export default function AuthPage() {
         {/* Hero section */}
         <div className="flex flex-1 flex-col items-center justify-center bg-primary text-primary-foreground p-6 md:w-1/2">
           <div className="text-center max-w-lg">
-            <h1 className="text-3xl font-bold mb-4">{t("appTitle")}</h1>
-            <p className="text-xl mb-6">{t("appDescription")}</p>
+            <h1 className="text-3xl font-bold mb-4">{t("app.title")}</h1>
+            <p className="text-xl mb-6">{t("app.tagline")}</p>
             <div className="space-y-4">
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center rtl:space-x-reverse space-x-2">
                 <div className="bg-primary-foreground text-primary w-8 h-8 rounded-full flex items-center justify-center">
                   1
                 </div>
-                <p>{t("feature1")}</p>
+                <p>{t("auth.features.analysis")}</p>
               </div>
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center rtl:space-x-reverse space-x-2">
                 <div className="bg-primary-foreground text-primary w-8 h-8 rounded-full flex items-center justify-center">
                   2
                 </div>
-                <p>{t("feature2")}</p>
+                <p>{t("auth.features.chatbot")}</p>
               </div>
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center rtl:space-x-reverse space-x-2">
                 <div className="bg-primary-foreground text-primary w-8 h-8 rounded-full flex items-center justify-center">
                   3
                 </div>
-                <p>{t("feature3")}</p>
+                <p>{t("auth.features.accessibility")}</p>
               </div>
             </div>
           </div>

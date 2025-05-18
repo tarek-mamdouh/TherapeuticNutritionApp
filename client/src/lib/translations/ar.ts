@@ -5,6 +5,15 @@ const arTranslations = {
     toggleTheme: "تبديل وضع الإضاءة",
     changeLanguage: "تغيير اللغة"
   },
+  auth: {
+    features: {
+      analysis: "تحليل الوجبات وتقييم مناسبتها لمرضى السكري",
+      chatbot: "مساعد ذكي لتقديم النصائح الغذائية المخصصة",
+      accessibility: "ميزات إمكانية الوصول المتكاملة والدعم الصوتي"
+    },
+    specialNeeds: "هل لديك احتياجات خاصة؟",
+    enableFullAudio: "تمكين التعليقات الصوتية الكاملة"
+  },
   tabs: {
     mealAnalysis: "تحليل الوجبات",
     chatbot: "المساعد الذكي",

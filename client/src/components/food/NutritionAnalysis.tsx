@@ -20,54 +20,49 @@ const NutritionAnalysis: React.FC<NutritionAnalysisProps> = ({
   const { speak } = useSpeech();
   
   const handleSpeakNutrition = () => {
-    // Speak only the actual nutrient value with its unit
-    // For example "Carbs: 24g" instead of a percentage
+    // Speak all nutrient values with their units
     
-    // Get the clicked element's nutrient type
-    const activeElement = document.activeElement;
-    const activeNutrientElement = activeElement?.closest('[role="group"]');
-    
-    // Default to carbs if no element is actively focused
-    let nutrientType = "carbs";
-    let nutrientValue = nutritionInfo.carbs;
-    let unit = "g"; // default unit
-    
-    // If an element is focused, get its nutrient type
-    if (activeNutrientElement) {
-      const label = activeNutrientElement.getAttribute('aria-label') || '';
-      
-      // Determine which nutrient is active based on the label
-      if (label.includes(t("nutritionAnalysis.calories"))) {
-        nutrientType = "calories";
-        nutrientValue = nutritionInfo.calories;
-        unit = ""; // no unit for calories
-      } else if (label.includes(t("nutritionAnalysis.carbs"))) {
-        nutrientType = "carbs";
-        nutrientValue = nutritionInfo.carbs;
-      } else if (label.includes(t("nutritionAnalysis.protein"))) {
-        nutrientType = "protein";
-        nutrientValue = nutritionInfo.protein;
-      } else if (label.includes(t("nutritionAnalysis.fat"))) {
-        nutrientType = "fat";
-        nutrientValue = nutritionInfo.fat;
-      } else if (label.includes(t("nutritionAnalysis.sugar"))) {
-        nutrientType = "sugar";
-        nutrientValue = nutritionInfo.sugar;
-      } else if (label.includes(t("nutritionAnalysis.glycemicIndex"))) {
-        nutrientType = "glycemicIndex";
-        nutrientValue = nutritionInfo.glycemicIndex;
-        unit = ""; // no unit for glycemic index
+    // Prepare all nutrition data with correct units
+    const nutrients = [
+      {
+        name: t("nutritionAnalysis.calories"),
+        value: nutritionInfo.calories,
+        unit: "" // no unit for calories
+      },
+      {
+        name: t("nutritionAnalysis.carbs"),
+        value: nutritionInfo.carbs,
+        unit: "g"
+      },
+      {
+        name: t("nutritionAnalysis.protein"),
+        value: nutritionInfo.protein,
+        unit: "g"
+      },
+      {
+        name: t("nutritionAnalysis.fat"),
+        value: nutritionInfo.fat,
+        unit: "g"
+      },
+      {
+        name: t("nutritionAnalysis.sugar"),
+        value: nutritionInfo.sugar,
+        unit: "g"
+      },
+      {
+        name: t("nutritionAnalysis.glycemicIndex"),
+        value: nutritionInfo.glycemicIndex,
+        unit: "" // no unit for glycemic index
       }
-    }
+    ];
     
-    // Get the translated nutrient name
-    const nutrientName = t(`nutritionAnalysis.${nutrientType}`);
+    // Format all nutrients as a single text with pauses between them
+    const fullText = nutrients
+      .map(nutrient => `${nutrient.name}: ${nutrient.value}${nutrient.unit}`)
+      .join(". ");
     
-    // Construct the simple speech text with just the nutrient and its actual value
-    const simplifiedText = `${nutrientName}: ${nutrientValue}${unit}`;
-    
-    // Speak only when the button is clicked
-    speak(simplifiedText);
+    // Speak all nutrition values when the button is clicked
+    speak(fullText);
   };
   
   return (

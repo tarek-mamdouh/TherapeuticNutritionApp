@@ -9,6 +9,7 @@ import { useSpeech } from "@/hooks/useSpeech";
 import { useLanguage } from "@/hooks/useLanguage";
 import { ChatMessage } from "@shared/schema";
 import ReactMarkdown from "react-markdown";
+import { format } from "date-fns";
 
 // Define the SpeechRecognition interfaces for TypeScript
 declare global {
@@ -30,8 +31,41 @@ const ChatbotAssistant: React.FC = () => {
   const { speak, cancelSpeech } = useSpeech();
   const { language, t } = useLanguage();
   
-  // Initialize with welcome message
+  // Initialize with welcome message and load chat history
   useEffect(() => {
+    // Try to load chat history from localStorage
+    try {
+      const savedMessages = localStorage.getItem('chatHistory');
+      let chatHistory: ChatMessage[] = [];
+      
+      if (savedMessages) {
+        chatHistory = JSON.parse(savedMessages);
+        
+        // Only use saved history if it's valid
+        if (Array.isArray(chatHistory) && chatHistory.length > 0) {
+          // Add welcome message to the beginning if it's not there
+          const hasWelcome = chatHistory.some(msg => !msg.isUser && msg.message.includes(t("chatbot.welcome")));
+          
+          if (!hasWelcome) {
+            const welcomeMessage: ChatMessage = {
+              id: Date.now() - 1000,
+              userId: 0,
+              message: t("chatbot.welcome"),
+              isUser: false,
+              createdAt: new Date()
+            };
+            chatHistory.unshift(welcomeMessage);
+          }
+          
+          setMessages(chatHistory);
+          return;
+        }
+      }
+    } catch (error) {
+      console.error("Error loading chat history:", error);
+    }
+    
+    // If no history or error, start with welcome message
     const welcomeMessage: ChatMessage = {
       id: 0,
       userId: 0,
@@ -42,8 +76,15 @@ const ChatbotAssistant: React.FC = () => {
     setMessages([welcomeMessage]);
   }, [t]);
   
-  // Scroll to bottom when messages change
+  // Save messages to localStorage and scroll to bottom when messages change
   useEffect(() => {
+    // Save to localStorage (limited to last 50 messages to prevent storage issues)
+    if (messages.length > 0) {
+      const recentMessages = messages.slice(-50);
+      localStorage.setItem('chatHistory', JSON.stringify(recentMessages));
+    }
+    
+    // Scroll to bottom of chat
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
   
@@ -210,20 +251,58 @@ const ChatbotAssistant: React.FC = () => {
     // User will need to click the Send button
   };
   
+  // Function to clear chat history
+  const clearChatHistory = () => {
+    // Ask for confirmation before clearing
+    if (window.confirm(t("chatbot.clearConfirm"))) {
+      // Keep only the welcome message
+      const welcomeMessage: ChatMessage = {
+        id: Date.now(),
+        userId: 0,
+        message: t("chatbot.welcome"),
+        isUser: false,
+        createdAt: new Date()
+      };
+      
+      setMessages([welcomeMessage]);
+      
+      // Clear localStorage
+      localStorage.removeItem('chatHistory');
+      
+      toast({
+        title: t("chatbot.historyCleared"),
+        description: t("chatbot.historyClearedDesc")
+      });
+    }
+  };
+  
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md border border-neutral-medium dark:border-gray-700 p-6 mb-8">
-      <div className="flex items-center mb-6">
-        <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center mr-3">
-          <Lightbulb className="h-7 w-7 text-white" />
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center">
+          <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center mr-3">
+            <Lightbulb className="h-7 w-7 text-white" />
+          </div>
+          <h3 className="text-xl font-bold">{t("chatbot.title")}</h3>
         </div>
-        <h3 className="text-xl font-bold">{t("chatbot.title")}</h3>
+        
+        <Button 
+          variant="outline" 
+          size="sm"
+          onClick={clearChatHistory}
+          className="text-neutral-dark hover:text-error transition-colors"
+          title={t("chatbot.clearHistory")}
+        >
+          {t("chatbot.clearHistory")}
+        </Button>
       </div>
       
       <div className="border border-neutral-medium dark:border-gray-600 rounded-lg mb-4 h-64 overflow-hidden p-4 bg-neutral-lightest dark:bg-gray-700">
         <ScrollArea className="h-full">
           <div className="flex flex-col space-y-4">
             {messages.map((msg) => (
-              <div key={msg.id} className={`flex ${msg.isUser ? "justify-end" : "justify-start"}`}>
+              <div key={msg.id} className={`flex flex-col ${msg.isUser ? "items-end" : "items-start"}`}>
+                {/* Message bubble */}
                 <div className={`rounded-lg p-3 max-w-[80%] ${
                   msg.isUser 
                     ? "bg-neutral-medium dark:bg-gray-600 text-neutral-darkest dark:text-white rounded-tl-none" 
@@ -238,6 +317,11 @@ const ChatbotAssistant: React.FC = () => {
                       </ReactMarkdown>
                     </div>
                   )}
+                </div>
+                
+                {/* Timestamp */}
+                <div className="text-xs text-neutral-dark mt-1 opacity-70">
+                  {format(new Date(), 'MMM d, h:mm a')}
                 </div>
               </div>
             ))}

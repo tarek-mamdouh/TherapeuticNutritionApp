@@ -1,0 +1,122 @@
+version: '3.8'
+
+services:
+  # Main application service
+  nutrition-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: therapeutic-nutrition-app
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    environment:
+      - NODE_ENV=production
+      - PORT=5000
+      # AI API Keys (set these in your environment or .env file)
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - PERPLEXITY_API_KEY=${PERPLEXITY_API_KEY}
+      # Session configuration
+      - SESSION_SECRET=${SESSION_SECRET:-your-super-secret-session-key-change-in-production}
+      # Database configuration (when PostgreSQL is added)
+      - DATABASE_URL=${DATABASE_URL:-}
+      - PGHOST=${PGHOST:-}
+      - PGPORT=${PGPORT:-5432}
+      - PGUSER=${PGUSER:-}
+      - PGPASSWORD=${PGPASSWORD:-}
+      - PGDATABASE=${PGDATABASE:-}
+    volumes:
+      # Mount volume for persistent data storage
+      - app-data:/app/data
+      # Mount logs for monitoring
+      - ./logs:/app/logs
+    networks:
+      - nutrition-network
+    depends_on:
+      - postgres
+    healthcheck:
+      test: ["CMD", "node", "-e", "const http = require('http'); const options = { host: 'localhost', port: 5000, path: '/api/foods', timeout: 2000 }; const req = http.request(options, (res) => { process.exit(res.statusCode === 200 ? 0 : 1); }); req.on('error', () => process.exit(1)); req.end();"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # PostgreSQL database (for future implementation)
+  postgres:
+    image: postgres:15-alpine
+    container_name: nutrition-postgres
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=${PGDATABASE:-nutrition_app}
+      - POSTGRES_USER=${PGUSER:-nutrition_user}
+      - POSTGRES_PASSWORD=${PGPASSWORD:-nutrition_password}
+      - POSTGRES_INITDB_ARGS=--encoding=UTF-8
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./database/init:/docker-entrypoint-initdb.d
+    networks:
+      - nutrition-network
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${PGUSER:-nutrition_user} -d ${PGDATABASE:-nutrition_app}"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+
+  # Redis for session storage and caching (optional)
+  redis:
+    image: redis:7-alpine
+    container_name: nutrition-redis
+    restart: unless-stopped
+    volumes:
+      - redis-data:/data
+    networks:
+      - nutrition-network
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-nutrition_redis_pass}
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 30s
+      timeout: 3s
+      retries: 5
+
+  # Nginx reverse proxy for production
+  nginx:
+    image: nginx:alpine
+    container_name: nutrition-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - nginx-logs:/var/log/nginx
+    networks:
+      - nutrition-network
+    depends_on:
+      - nutrition-app
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+volumes:
+  postgres-data:
+    driver: local
+  redis-data:
+    driver: local
+  app-data:
+    driver: local
+  nginx-logs:
+    driver: local
+
+networks:
+  nutrition-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16

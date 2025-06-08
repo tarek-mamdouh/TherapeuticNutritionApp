@@ -1,0 +1,100 @@
+therapeutic-nutrition-app-dev  | 
+therapeutic-nutrition-app-dev  | > rest-express@1.0.0 dev
+therapeutic-nutrition-app-dev  | > NODE_ENV=development tsx server/index.ts
+therapeutic-nutrition-app-dev  | 
+therapeutic-nutrition-app-dev  | node:internal/errors:496
+therapeutic-nutrition-app-dev  |     ErrorCaptureStackTrace(err);
+therapeutic-nutrition-app-dev  |     ^
+therapeutic-nutrition-app-dev  | 
+therapeutic-nutrition-app-dev  | TypeError [ERR_INVALID_ARG_TYPE]: The "paths[0]" argument must be of type string. Received undefined
+therapeutic-nutrition-app-dev  |     at __node_internal_captureLargerStackTrace (node:internal/errors:496:5)
+therapeutic-nutrition-app-dev  |     at new NodeError (node:internal/errors:405:5)
+therapeutic-nutrition-app-dev  |     at validateString (node:internal/validators:162:11)
+therapeutic-nutrition-app-dev  |     at Object.resolve (node:path:1115:7)
+therapeutic-nutrition-app-dev  |     at <anonymous> (/app/vite.config.ts:21:17)
+therapeutic-nutrition-app-dev  |     at ModuleJob.run (node:internal/modules/esm/module_job:195:25)
+therapeutic-nutrition-app-dev  |     at async ModuleLoader.import (node:internal/modules/esm/loader:337:24)
+therapeutic-nutrition-app-dev  |     at async loadESM (node:internal/process/esm_loader:34:7)
+therapeutic-nutrition-app-dev  |     at async handleMainPromise (node:internal/modules/run_main:106:12) {
+therapeutic-nutrition-app-dev  |   code: 'ERR_INVALID_ARG_TYPE'
+therapeutic-nutrition-app-dev  | }
+therapeutic-nutrition-app-dev  | 
+therapeutic-nutrition-app-dev  | Node.js v18.20.8
+therapeutic-nutrition-app-dev exited with code 0
+therapeutic-nutrition-app-dev  | 
+therapeutic-nutrition-app-dev  | > rest-express@1.0.0 dev
+therapeutic-nutrition-app-dev  | > NODE_ENV=development tsx server/index.ts
+therapeutic-nutrition-app-dev  | 
+therapeutic-nutrition-app-dev  | node:internal/errors:496
+therapeutic-nutrition-app-dev  |     ErrorCaptureStackTrace(err);
+therapeutic-nutrition-app-dev  |     ^
+therapeutic-nutrition-app-dev  | 
+therapeutic-nutrition-app-dev  | TypeError [ERR_INVALID_ARG_TYPE]: The "paths[0]" argument must be of type string. Received undefined
+therapeutic-nutrition-app-dev  |     at __node_internal_captureLargerStackTrace (node:internal/errors:496:5)
+therapeutic-nutrition-app-dev  |     at new NodeError (node:internal/errors:405:5)
+therapeutic-nutrition-app-dev  |     at validateString (node:internal/validators:162:11)
+therapeutic-nutrition-app-dev  |     at Object.resolve (node:path:1115:7)
+therapeutic-nutrition-app-dev  |     at <anonymous> (/app/vite.config.ts:21:17)
+therapeutic-nutrition-app-dev  |     at ModuleJob.run (node:internal/modules/esm/module_job:195:25)
+therapeutic-nutrition-app-dev  |     at async ModuleLoader.import (node:internal/modules/esm/loader:337:24)
+therapeutic-nutrition-app-dev  |     at async loadESM (node:internal/process/esm_loader:34:7)
+therapeutic-nutrition-app-dev  |     at async handleMainPromise (node:internal/modules/run_main:106:12) {
+therapeutic-nutrition-app-dev  |   code: 'ERR_INVALID_ARG_TYPE'
+therapeutic-nutrition-app-dev  | }
+therapeutic-nutrition-app-dev  | 
+therapeutic-nutrition-app-dev  | Node.js v18.20.8
+therapeutic-nutrition-app-dev exited with code 1
+therapeutic-nutrition-app-dev  | 
+therapeutic-nutrition-app-dev  | > rest-express@1.0.0 dev
+therapeutic-nutrition-app-dev  | > NODE_ENV=development tsx server/index.ts
+therapeutic-nutrition-app-dev  | 
+therapeutic-nutrition-app-dev  | node:internal/errors:496
+therapeutic-nutrition-app-dev  |     ErrorCaptureStackTrace(err);
+therapeutic-nutrition-app-dev  |     ^
+therapeutic-nutrition-app-dev  | 
+therapeutic-nutrition-app-dev  | TypeError [ERR_INVALID_ARG_TYPE]: The "paths[0]" argument must be of type string. Received undefined
+therapeutic-nutrition-app-dev  |     at __node_internal_captureLargerStackTrace (node:internal/errors:496:5)
+therapeutic-nutrition-app-dev  |     at new NodeError (node:internal/errors:405:5)
+therapeutic-nutrition-app-dev  |     at validateString (node:internal/validators:162:11)
+therapeutic-nutrition-app-dev  |     at Object.resolve (node:path:1115:7)
+therapeutic-nutrition-app-dev  |     at <anonymous> (/app/vite.config.ts:21:17)
+therapeutic-nutrition-app-dev  |     at ModuleJob.run (node:internal/modules/esm/module_job:195:25)
+therapeutic-nutrition-app-dev  |     at async ModuleLoader.import (node:internal/modules/esm/loader:337:24)
+therapeutic-nutrition-app-dev  |     at async loadESM (node:internal/process/esm_loader:34:7)
+therapeutic-nutrition-app-dev  |     at async handleMainPromise (node:internal/modules/run_main:106:12) {
+therapeutic-nutrition-app-dev  |   code: 'ERR_INVALID_ARG_TYPE'
+therapeutic-nutrition-app-dev  | }
+therapeutic-nutrition-app-dev  | 
+therapeutic-nutrition-app-dev  | Node.js v18.20.8
+therapeutic-nutrition-app-dev exited with code 1
+therapeutic-nutrition-app-dev  | 
+therapeutic-nutrition-app-dev  | > rest-express@1.0.0 dev
+therapeutic-nutrition-app-dev  | > NODE_ENV=development tsx server/index.ts
+therapeutic-nutrition-app-dev  | 
+therapeutic-nutrition-app-dev  | node:internal/errors:496
+therapeutic-nutrition-app-dev  |     ErrorCaptureStackTrace(err);
+therapeutic-nutrition-app-dev  |     ^
+therapeutic-nutrition-app-dev  | 
+therapeutic-nutrition-app-dev  | TypeError [ERR_INVALID_ARG_TYPE]: The "paths[0]" argument must be of type string. Received undefined
+therapeutic-nutrition-app-dev  |     at __node_internal_captureLargerStackTrace (node:internal/errors:496:5)
+therapeutic-nutrition-app-dev  |     at new NodeError (node:internal/errors:405:5)
+therapeutic-nutrition-app-dev  |     at validateString (node:internal/validators:162:11)
+therapeutic-nutrition-app-dev  |     at Object.resolve (node:path:1115:7)
+therapeutic-nutrition-app-dev  |     at <anonymous> (/app/vite.config.ts:21:17)
+therapeutic-nutrition-app-dev  |     at ModuleJob.run (node:internal/modules/esm/module_job:195:25)
+therapeutic-nutrition-app-dev  |     at async ModuleLoader.import (node:internal/modules/esm/loader:337:24)
+therapeutic-nutrition-app-dev  |     at async loadESM (node:internal/process/esm_loader:34:7)
+therapeutic-nutrition-app-dev  |     at async handleMainPromise (node:internal/modules/run_main:106:12) {
+therapeutic-nutrition-app-dev  |   code: 'ERR_INVALID_ARG_TYPE'
+therapeutic-nutrition-app-dev  | }
+therapeutic-nutrition-app-dev  | 
+therapeutic-nutrition-app-dev  | Node.js v18.20.8
+therapeutic-nutrition-app-dev exited with code 1
+therapeutic-nutrition-app-dev  | 
+therapeutic-nutrition-app-dev  | > rest-express@1.0.0 dev
+therapeutic-nutrition-app-dev  | > NODE_ENV=development tsx server/index.ts
+therapeutic-nutrition-app-dev  | 
+therapeutic-nutrition-app-dev  | node:internal/errors:496
+therapeutic-nutrition-app-dev  |     ErrorCaptureStackTrace(err);
+therapeutic-nutrition-app-dev  |     ^
+therapeutic-nutrition-app-dev  |

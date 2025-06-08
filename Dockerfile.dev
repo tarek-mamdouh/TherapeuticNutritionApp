@@ -1,0 +1,35 @@
+# Development Dockerfile
+FROM node:20-alpine
+
+# Install system dependencies
+RUN apk add --no-cache git
+
+# Set working directory
+WORKDIR /app
+
+# Copy package files and install dependencies
+COPY package*.json ./
+RUN npm ci --only=production
+
+# Install development dependencies separately
+RUN npm install --only=dev
+
+# Copy source code
+COPY . .
+
+# Create necessary directories
+RUN mkdir -p logs attached_assets dist
+
+# Expose port
+EXPOSE 5000
+
+# Set environment
+ENV NODE_ENV=development
+ENV PORT=5000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD node -e "const http = require('http'); const options = { host: 'localhost', port: 5000, path: '/health', timeout: 2000 }; const req = http.request(options, (res) => { process.exit(res.statusCode === 200 ? 0 : 1); }); req.on('error', () => process.exit(1)); req.end();"
+
+# Start server
+CMD ["npm", "run", "dev"]

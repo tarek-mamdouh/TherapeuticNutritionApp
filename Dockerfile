@@ -1,5 +1,8 @@
-# Multi-stage build for production optimization
-FROM node:18-alpine as builder
+# Multi-stage production Dockerfile
+FROM node:20-alpine AS builder
+
+# Install system dependencies
+RUN apk add --no-cache git python3 make g++
 
 # Set working directory
 WORKDIR /app
@@ -7,8 +10,8 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies
-RUN npm ci --only=production && npm cache clean --force
+# Install all dependencies
+RUN npm ci
 
 # Copy source code
 COPY . .
@@ -17,14 +20,14 @@ COPY . .
 RUN npm run build
 
 # Production stage
-FROM node:18-alpine as production
+FROM node:20-alpine AS production
 
-# Install dumb-init for proper signal handling
+# Install system dependencies
 RUN apk add --no-cache dumb-init
 
-# Create app user for security
+# Create app user
 RUN addgroup -g 1001 -S nodejs
-RUN adduser -S nodejs -u 1001
+RUN adduser -S nextjs -u 1001
 
 # Set working directory
 WORKDIR /app
@@ -36,34 +39,23 @@ COPY package*.json ./
 RUN npm ci --only=production && npm cache clean --force
 
 # Copy built application from builder stage
-COPY --from=builder --chown=nodejs:nodejs /app/dist ./dist
-COPY --from=builder --chown=nodejs:nodejs /app/server ./server
-COPY --from=builder --chown=nodejs:nodejs /app/shared ./shared
+COPY --from=builder --chown=nextjs:nodejs /app/dist ./dist
+COPY --from=builder --chown=nextjs:nodejs /app/shared ./shared
+COPY --from=builder --chown=nextjs:nodejs /app/server ./server
 
-# Copy additional necessary files
-COPY --chown=nodejs:nodejs tsconfig.json ./
-COPY --chown=nodejs:nodejs vite.config.ts ./
+# Create necessary directories
+RUN mkdir -p logs uploads && chown -R nextjs:nodejs logs uploads
 
-# Set environment variables
-ENV NODE_ENV=production
-ENV PORT=5000
+# Switch to non-root user
+USER nextjs
 
 # Expose port
 EXPOSE 5000
 
-# Switch to non-root user
-USER nodejs
-
 # Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD node -e "const http = require('http'); \
-  const options = { host: 'localhost', port: 5000, path: '/api/foods', timeout: 2000 }; \
-  const req = http.request(options, (res) => { \
-    process.exit(res.statusCode === 200 ? 0 : 1); \
-  }); \
-  req.on('error', () => process.exit(1)); \
-  req.end();"
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+  CMD node -e "const http = require('http'); const options = { host: 'localhost', port: 5000, path: '/health', timeout: 5000 }; const req = http.request(options, (res) => { process.exit(res.statusCode === 200 ? 0 : 1); }); req.on('error', () => process.exit(1)); req.end();"
 
-# Start application with dumb-init
+# Start application
 ENTRYPOINT ["dumb-init", "--"]
 CMD ["npm", "start"]

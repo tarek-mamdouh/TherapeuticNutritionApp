@@ -100,9 +100,9 @@ export async function recognizeFood(imageBuffer: Buffer): Promise<RecognizedFood
       return topFoods;
     }
     
-    // If all API attempts fail, use sample data
-    console.log("Food recognition returned no results from any API, using fallback foods");
-    return getFallbackFoods();
+    // If all API attempts fail or return empty arrays, return empty result
+    console.log("Food recognition returned no results from any API - image likely contains no food");
+    return [];
   } catch (error) {
     console.error("Food recognition error:", error);
     // Return fallback foods if there's an error

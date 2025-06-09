@@ -61,7 +61,21 @@ const geminiTextModel = genAI.getGenerativeModel({
 export async function recognizeFoodWithGemini(imageBase64: string): Promise<{ name: string, confidence: number }[]> {
   try {
     // Create prompt with the image
-    const prompt = "Analyze this image and identify all food items present. Look for individual ingredients, dishes, and any visible food components. Be comprehensive and detailed in your analysis. Return your response as a JSON array of objects with 'name' (in Arabic) and 'confidence' (0-1 value) properties. Format your response with only the JSON array, without any additional explanation or text.";
+    const prompt = `Analyze this image carefully. First, determine if this image contains any food items, meals, or edible ingredients.
+
+IMPORTANT: If the image does NOT contain food (e.g., it shows people, objects, scenery, text, etc.), respond with an empty array: []
+
+If the image DOES contain food:
+1. Identify all visible food items, dishes, and ingredients
+2. Only include items you can clearly see in the image
+3. Be specific (e.g., "أرز أبيض" not just "أرز")
+4. Assign confidence scores based on clarity and certainty
+
+Return ONLY a JSON array of objects with 'name' (in Arabic) and 'confidence' (0-1) properties. No additional text or explanation.
+
+Examples:
+- No food: []
+- Food present: [{"name": "أرز أبيض", "confidence": 0.9}, {"name": "دجاج مشوي", "confidence": 0.8}]`;
     
     // Prepare the image for the API
     const imageParts = [

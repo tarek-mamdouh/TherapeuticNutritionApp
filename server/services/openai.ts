@@ -141,14 +141,14 @@ export async function recognizeFoodWithOpenAI(imageBase64: string): Promise<{ na
       messages: [
         {
           role: "system",
-          content: "You are a food recognition expert. Analyze the image and identify all food items present. Return the result as a JSON array of objects, each with 'name' (in Arabic) and 'confidence' (0-1 value) properties. Include only the most likely foods (max 5 items)."
+          content: "You are a food recognition expert. First, determine if this image contains any food items, meals, or edible ingredients. If the image does NOT contain food (e.g., shows people, objects, scenery, text, etc.), return an empty array: []. If the image DOES contain food, identify all visible food items and return a JSON array with 'name' (in Arabic) and 'confidence' (0-1) properties. Only include clearly visible foods (max 5 items)."
         },
         {
           role: "user",
           content: [
             {
               type: "text",
-              text: "Identify all food items in this image. Return only JSON without any other text."
+              text: "Analyze this image: Does it contain food? If yes, identify the foods. Return only JSON array without any other text."
             },
             {
               type: "image_url",

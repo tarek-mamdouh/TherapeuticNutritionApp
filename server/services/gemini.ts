@@ -61,21 +61,7 @@ const geminiTextModel = genAI.getGenerativeModel({
 export async function recognizeFoodWithGemini(imageBase64: string): Promise<{ name: string, confidence: number }[]> {
   try {
     // Create prompt with the image
-    const prompt = `Analyze this image carefully. First, determine if this image contains any food items, meals, or edible ingredients.
-
-IMPORTANT: If the image does NOT contain food (e.g., it shows people, objects, scenery, text, etc.), respond with an empty array: []
-
-If the image DOES contain food:
-1. Identify all visible food items, dishes, and ingredients
-2. Only include items you can clearly see in the image
-3. Be specific (e.g., "أرز أبيض" not just "أرز")
-4. Assign confidence scores based on clarity and certainty
-
-Return ONLY a JSON array of objects with 'name' (in Arabic) and 'confidence' (0-1) properties. No additional text or explanation.
-
-Examples:
-- No food: []
-- Food present: [{"name": "أرز أبيض", "confidence": 0.9}, {"name": "دجاج مشوي", "confidence": 0.8}]`;
+    const prompt = "Analyze this image and identify all food items present. Look for individual ingredients, dishes, and any visible food components. Be comprehensive and detailed in your analysis. Return your response as a JSON array of objects with 'name' (in Arabic) and 'confidence' (0-1 value) properties. Format your response with only the JSON array, without any additional explanation or text.";
     
     // Prepare the image for the API
     const imageParts = [
@@ -196,8 +182,8 @@ export async function chatWithGemini(query: string, language: string = 'ar'): Pr
     
     // Create system prompt based on language
     let systemPrompt = language === 'ar' 
-      ? "أنت مساعد طبي متخصص في التغذية العلاجية لمرضى السكري. أجب في جملة أو جملتين فقط. كن مختصراً ومباشراً جداً. ركز على النصيحة الأساسية فقط دون تفاصيل زائدة."
-      : "You are a medical assistant for diabetic nutrition. Answer in 1-2 sentences maximum. Be extremely concise and direct. Focus only on the essential advice without extra details.";
+      ? "أنت مساعد طبي متخصص في التغذية العلاجية لمرضى السكري. قدم إجابات قصيرة وموجزة جداً (1-3 جمل) باللغة العربية الفصحى. تجنب المصطلحات المعقدة. يجب أن تكون إجاباتك مختصرة ومباشرة وتغطي النقاط الأساسية فقط."
+      : "You are a medical assistant specializing in therapeutic nutrition for diabetic patients. KEEP YOUR ANSWERS EXTREMELY BRIEF (1-3 sentences only). Avoid complex terminology. Your responses must be short, direct, and cover only the essential points.";
     
     // Send the message with system prompt
     const result = await chat.sendMessage(systemPrompt + "\n\n" + query);

@@ -89,8 +89,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         language: language || "ar",
         age: null,
         diabetesType: null,
-        preferences: null,
-        createdAt: new Date()
+        preferences: null
       });
       
       console.log("User created successfully:", username);
@@ -108,7 +107,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         user: userWithoutPassword,
         token
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Registration error:", error);
       if (error.name === "ZodError") {
         return res.status(400).json({ message: error.errors });
@@ -157,7 +156,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         user: userWithoutPassword,
         token
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Login error:", error);
       if (error.name === "ZodError") {
         return res.status(400).json({ message: error.errors });
@@ -216,6 +215,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update user profile
+  app.patch("/api/user", authenticate, async (req: AuthenticatedRequest, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+      
+      const userId = req.user.id;
+      const userData = req.body;
+      
+      // Don't allow changing username or email through this endpoint
+      delete userData.username;
+      delete userData.email;
+      delete userData.password; // Don't allow password changes through this route
+      
+      // Convert age to number if provided
+      if (userData.age && typeof userData.age === 'string') {
+        userData.age = parseInt(userData.age, 10);
+        if (isNaN(userData.age)) {
+          userData.age = null;
+        }
+      }
+      
+      const updatedUser = await storage.updateUser(userId, userData);
+      
+      // Return updated user without password
+      const { password: _, ...userWithoutPassword } = updatedUser;
+      return res.status(200).json(userWithoutPassword);
+    } catch (error: any) {
+      console.error("Update user error:", error);
+      return res.status(500).json({ message: error.message || "Internal server error" });
+    }
+  });
+
   app.patch("/api/user/profile", authenticate, async (req: AuthenticatedRequest, res) => {
     try {
       if (!req.user) {
@@ -234,14 +267,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userData.password = await bcrypt.hash(userData.password, 10);
       }
       
+      // Convert age to number if provided
+      if (userData.age && typeof userData.age === 'string') {
+        userData.age = parseInt(userData.age, 10);
+        if (isNaN(userData.age)) {
+          userData.age = null;
+        }
+      }
+      
       const updatedUser = await storage.updateUser(userId, userData);
       
       // Return updated user without password
-      const { password, ...userWithoutPassword } = updatedUser;
+      const { password: _, ...userWithoutPassword } = updatedUser;
       return res.status(200).json(userWithoutPassword);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Update profile error:", error);
-      return res.status(500).json({ message: "Internal server error" });
+      return res.status(500).json({ message: error.message || "Internal server error" });
     }
   });
 
@@ -290,16 +331,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Recognize food from image
       const recognizedFoods = await recognizeFood(imageBuffer);
       
-      // If no food recognized, return appropriate response
-      if (!recognizedFoods || recognizedFoods.length === 0) {
-        return res.status(200).json({
-          recognizedFoods: [],
-          nutritionInfo: null,
-          diabetesSuitability: null,
-          message: "No food items detected in the image. Please upload an image that clearly shows food items."
-        });
-      }
-      
       // Get nutrition info for each recognized food
       const nutritionInfo = await getFoodNutrition(recognizedFoods.map(food => food.name));
       
@@ -341,22 +372,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Get nutrition info by aggregating the food data
       const nutritionInfo = {
-        calories: validFoods.reduce((sum, food) => sum + food.calories, 0),
-        carbs: validFoods.reduce((sum, food) => sum + food.carbs, 0),
-        protein: validFoods.reduce((sum, food) => sum + food.protein, 0),
-        fat: validFoods.reduce((sum, food) => sum + food.fat, 0),
-        sugar: validFoods.reduce((sum, food) => sum + food.sugar, 0),
-        glycemicIndex: Math.round(validFoods.reduce((sum, food) => sum + (food.glycemicIndex || 0), 0) / validFoods.length)
+        calories: validFoods.reduce((sum, food) => sum + (food?.calories || 0), 0),
+        carbs: validFoods.reduce((sum, food) => sum + (food?.carbs || 0), 0),
+        protein: validFoods.reduce((sum, food) => sum + (food?.protein || 0), 0),
+        fat: validFoods.reduce((sum, food) => sum + (food?.fat || 0), 0),
+        sugar: validFoods.reduce((sum, food) => sum + (food?.sugar || 0), 0),
+        glycemicIndex: Math.round(validFoods.reduce((sum, food) => sum + (food?.glycemicIndex || 0), 0) / validFoods.length)
       };
       
       // Create recognizedFoods array for the response (with 100% confidence for manual entries)
       const recognizedFoods = validFoods.map(food => ({
-        name: food.name,
+        name: food?.name || 'Unknown',
         confidence: 1.0
       }));
       
       // Determine diabetes suitability
-      const foodNames = validFoods.map(food => food.name);
+      const foodNames = validFoods.map(food => food?.name || 'Unknown');
       const diabetesSuitability = await analyzeFoodSuitability(foodNames, nutritionInfo);
       
       const response: FoodAnalysisResponse = {

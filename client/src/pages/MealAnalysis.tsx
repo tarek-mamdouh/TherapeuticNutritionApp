@@ -87,25 +87,15 @@ const MealAnalysis: React.FC = () => {
         throw new Error(`Server responded with ${response.status}`);
       }
       
-      const data: any = await response.json();
-      
-      // Check if no food was detected
-      if (!data.recognizedFoods || data.recognizedFoods.length === 0) {
-        toast({
-          title: t("mealAnalysis.noFoodDetected"),
-          description: t("mealAnalysis.noFoodDetectedDesc"),
-          variant: "destructive"
-        });
-        setIsAnalyzing(false);
-        return;
-      }
+      const data: FoodAnalysisResponse = await response.json();
       
       // Transform recognized foods to full Food objects with confidence
-      const foodsWithDetails = data.recognizedFoods.map((item: any) => {
+      const foodsWithDetails = data.recognizedFoods.map(item => {
+        // This is a simplification, in real app you'd get full food details from API
         return {
-          id: 0,
+          id: 0, // This would be filled with real data from API
           name: item.name,
-          nameEn: "",
+          nameEn: "", // This would be filled with real data from API
           calories: 0,
           carbs: 0,
           protein: 0,

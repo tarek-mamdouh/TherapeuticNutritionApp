@@ -118,46 +118,5 @@
     "listeningDesc": "Speak now...",
     "error": "Speech recognition error",
     "errorDesc": "An error occurred while trying to recognize your speech: {{error}}"
-  },
-  
-  "camera": {
-    "title": "Camera",
-    "notSupported": "Camera not supported",
-    "notSupportedDesc": "Your browser doesn't support camera access",
-    "accessError": "Unable to access camera",
-    "starting": "Starting camera...",
-    "instructions": "Position your meal in the camera and tap the capture button",
-    "error": "Camera Error"
-  },
-  
-  "imageUpload": {
-    "title": "Analyze Food from Image",
-    "dragDrop": "Drag and drop an image here or",
-    "browse": "browse files",
-    "supportedFormats": "Supported formats: JPG, PNG, WebP (max 5MB)",
-    "dragDropArea": "Drag and drop area for images",
-    "capturePhoto": "Capture Photo",
-    "uploadFile": "Upload File",
-    "troubleManualEntry": "Having trouble? Try manual entry",
-    "invalidType": "Invalid file type",
-    "invalidTypeDesc": "Please select an image file (JPG, PNG, WebP)",
-    "tooLarge": "File too large",
-    "tooLargeDesc": "Please select an image smaller than 5MB"
-  },
-  
-  "mealAnalysis": {
-    "title": "Food Analysis",
-    "description": "Upload a photo or manually select foods to analyze their nutritional content and diabetes suitability",
-    "analyzing": "Analyzing your meal...",
-    "noFoodDetected": "No Food Detected",
-    "noFoodDetectedDesc": "The image doesn't appear to contain any food items. Please upload an image that clearly shows food.",
-    "imageAnalysisError": "Analysis Error",
-    "imageAnalysisErrorDesc": "Unable to analyze the image. Please try again.",
-    "recognizedFoodsIntro": "Detected foods in your meal"
-  },
-  
-  "common": {
-    "close": "Close",
-    "retry": "Retry"
   }
 }

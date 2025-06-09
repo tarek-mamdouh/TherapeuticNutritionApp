@@ -47,11 +47,15 @@ const CameraCapture: React.FC<CameraCaptureProps> = ({ onCapture, onClose }) => 
         videoRef.current.play();
       }
 
-      // Check if device has flash
+      // Check if device has flash (simplified check)
       const tracks = stream.getVideoTracks();
       if (tracks.length > 0) {
-        const capabilities = tracks[0].getCapabilities();
-        setHasFlash(!!capabilities.torch);
+        try {
+          const capabilities = tracks[0].getCapabilities();
+          setHasFlash(!!(capabilities as any).torch);
+        } catch (err) {
+          setHasFlash(false);
+        }
       }
 
       setIsLoading(false);
@@ -81,7 +85,7 @@ const CameraCapture: React.FC<CameraCaptureProps> = ({ onCapture, onClose }) => 
       const tracks = streamRef.current.getVideoTracks();
       if (tracks.length > 0) {
         await tracks[0].applyConstraints({
-          advanced: [{ torch: !flashEnabled }]
+          advanced: [{ torch: !flashEnabled } as any]
         });
         setFlashEnabled(!flashEnabled);
       }

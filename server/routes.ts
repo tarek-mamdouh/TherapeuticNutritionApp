@@ -290,6 +290,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Recognize food from image
       const recognizedFoods = await recognizeFood(imageBuffer);
       
+      // If no food recognized, return appropriate response
+      if (!recognizedFoods || recognizedFoods.length === 0) {
+        return res.status(200).json({
+          recognizedFoods: [],
+          nutritionInfo: null,
+          diabetesSuitability: null,
+          message: "No food items detected in the image. Please upload an image that clearly shows food items."
+        });
+      }
+      
       // Get nutrition info for each recognized food
       const nutritionInfo = await getFoodNutrition(recognizedFoods.map(food => food.name));
       

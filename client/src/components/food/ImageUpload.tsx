@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Camera, FileUp, HelpCircle, X, RotateCcw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { t } from "@/lib/i18n";
-import CameraCapture from "./CameraCapture";
+// import CameraCapture from "./CameraCapture";
 
 interface ImageUploadProps {
   onImageSelect: (file: File) => void;
@@ -72,18 +72,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ onImageSelect, onSwitch }) =>
     }
   };
 
-  const openCamera = () => {
-    setShowCamera(true);
-  };
 
-  const closeCamera = () => {
-    setShowCamera(false);
-  };
-
-  const handleCameraCapture = useCallback((file: File) => {
-    setShowCamera(false);
-    validateAndProcessFile(file);
-  }, []);
 
   const captureImage = () => {
     if (fileInputRef.current) {
@@ -93,76 +82,67 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ onImageSelect, onSwitch }) =>
   };
 
   return (
-    <>
-      {showCamera ? (
-        <CameraCapture
-          onCapture={handleCameraCapture}
-          onClose={closeCamera}
-        />
-      ) : (
-        <div className="flex-1 text-center">
-          <h3 className="text-xl font-bold mb-3">{t("imageUpload.title")}</h3>
+    <div className="flex-1 text-center">
+      <h3 className="text-xl font-bold mb-3">{t("imageUpload.title")}</h3>
 
-          <div
-            className={`border-2 border-dashed rounded-lg p-8 mb-4 cursor-pointer hover:border-primary transition-colors ${
-              isDragging ? "border-primary bg-primary/5" : "border-neutral-medium dark:border-gray-600"
-            }`}
-            role="button"
-            tabIndex={0}
-            aria-label={t("imageUpload.dragDropArea")}
-            onClick={triggerFileInput}
-            onKeyDown={(e) => e.key === "Enter" && triggerFileInput()}
-            onDragOver={handleDragOver}
-            onDragLeave={handleDragLeave}
-            onDrop={handleDrop}
-          >
-            <div className="flex flex-col items-center space-y-4">
-              <FileUp className="h-16 w-16 text-neutral-dark dark:text-gray-400" />
-              <p className="text-lg">
-                {t("imageUpload.dragDrop")} <span className="text-primary font-medium">{t("imageUpload.browse")}</span>
-              </p>
-              <p className="text-neutral-dark text-sm">{t("imageUpload.supportedFormats")}</p>
-              <input
-                type="file"
-                className="hidden"
-                accept="image/*"
-                onChange={handleFileInput}
-                ref={fileInputRef}
-              />
-            </div>
-          </div>
-
-          <div className="flex gap-2 mb-2">
-            <Button 
-              className="flex-1 flex items-center justify-center accessibility-focus"
-              onClick={openCamera}
-            >
-              <Camera className="h-5 w-5 rtl:ml-2 ltr:mr-2" />
-              {t("imageUpload.capturePhoto")}
-            </Button>
-            <Button 
-              variant="outline"
-              className="flex-1 flex items-center justify-center accessibility-focus"
-              onClick={captureImage}
-            >
-              <FileUp className="h-5 w-5 rtl:ml-2 ltr:mr-2" />
-              {t("imageUpload.uploadFile")}
-            </Button>
-          </div>
-          
-          <div className="text-sm text-neutral-dark mt-2">
-            <Button 
-              variant="link" 
-              className="accessibility-focus text-primary hover:underline p-1 rounded flex items-center"
-              onClick={onSwitch}
-            >
-              <HelpCircle className="h-4 w-4 rtl:ml-1 ltr:mr-1" />
-              {t("imageUpload.troubleManualEntry")}
-            </Button>
-          </div>
+      <div
+        className={`border-2 border-dashed rounded-lg p-8 mb-4 cursor-pointer hover:border-primary transition-colors ${
+          isDragging ? "border-primary bg-primary/5" : "border-neutral-medium dark:border-gray-600"
+        }`}
+        role="button"
+        tabIndex={0}
+        aria-label={t("imageUpload.dragDropArea")}
+        onClick={triggerFileInput}
+        onKeyDown={(e) => e.key === "Enter" && triggerFileInput()}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+      >
+        <div className="flex flex-col items-center space-y-4">
+          <FileUp className="h-16 w-16 text-neutral-dark dark:text-gray-400" />
+          <p className="text-lg">
+            {t("imageUpload.dragDrop")} <span className="text-primary font-medium">{t("imageUpload.browse")}</span>
+          </p>
+          <p className="text-neutral-dark text-sm">{t("imageUpload.supportedFormats")}</p>
+          <input
+            type="file"
+            className="hidden"
+            accept="image/*"
+            onChange={handleFileInput}
+            ref={fileInputRef}
+          />
         </div>
-      )}
-    </>
+      </div>
+
+      <div className="flex gap-2 mb-2">
+        <Button 
+          className="flex-1 flex items-center justify-center accessibility-focus"
+          onClick={captureImage}
+        >
+          <Camera className="h-5 w-5 rtl:ml-2 ltr:mr-2" />
+          {t("imageUpload.capturePhoto")}
+        </Button>
+        <Button 
+          variant="outline"
+          className="flex-1 flex items-center justify-center accessibility-focus"
+          onClick={triggerFileInput}
+        >
+          <FileUp className="h-5 w-5 rtl:ml-2 ltr:mr-2" />
+          {t("imageUpload.uploadFile")}
+        </Button>
+      </div>
+      
+      <div className="text-sm text-neutral-dark mt-2">
+        <Button 
+          variant="link" 
+          className="accessibility-focus text-primary hover:underline p-1 rounded flex items-center"
+          onClick={onSwitch}
+        >
+          <HelpCircle className="h-4 w-4 rtl:ml-1 ltr:mr-1" />
+          {t("imageUpload.troubleManualEntry")}
+        </Button>
+      </div>
+    </div>
   );
 };
 

@@ -145,6 +145,17 @@
     "tooLargeDesc": "Please select an image smaller than 5MB"
   },
   
+  "mealAnalysis": {
+    "title": "Food Analysis",
+    "description": "Upload a photo or manually select foods to analyze their nutritional content and diabetes suitability",
+    "analyzing": "Analyzing your meal...",
+    "noFoodDetected": "No Food Detected",
+    "noFoodDetectedDesc": "The image doesn't appear to contain any food items. Please upload an image that clearly shows food.",
+    "imageAnalysisError": "Analysis Error",
+    "imageAnalysisErrorDesc": "Unable to analyze the image. Please try again.",
+    "recognizedFoodsIntro": "Detected foods in your meal"
+  },
+  
   "common": {
     "close": "Close",
     "retry": "Retry"

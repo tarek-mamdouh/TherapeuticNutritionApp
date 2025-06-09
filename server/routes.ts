@@ -416,7 +416,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Fetch food details for each meal log
       const mealLogsWithFood = await Promise.all(
         mealLogs.map(async (log) => {
-          const food = await storage.getFood(log.foodId);
+          const food = (log.foodId && typeof log.foodId === 'number') ? await storage.getFood(log.foodId) : null;
           return { ...log, food };
         })
       );
@@ -464,13 +464,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Fetch food details for the newly created meal logs
       const mealLogsWithFood = await Promise.all(
         mealLogs.map(async (log) => {
-          const food = await storage.getFood(log.foodId);
+          const food = (log.foodId && typeof log.foodId === 'number') ? await storage.getFood(log.foodId) : null;
           return { ...log, food };
         })
       );
       
       return res.status(201).json(mealLogsWithFood);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Add meal log error:", error);
       if (error.name === "ZodError") {
         return res.status(400).json({ message: error.errors });
@@ -709,8 +709,7 @@ async function initializeSampleData() {
         language: "en",
         age: 35,
         diabetesType: "type2",
-        preferences: null,
-        createdAt: new Date()
+        preferences: null
       });
       console.log("Demo user created: testuser / password123");
     }
